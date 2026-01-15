@@ -166,10 +166,10 @@
                     if(!FamilyApp.geminiKey) return this.configure();
 
                     const btn = document.getElementById('btnAiGen');
-                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Analizando...';
+                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Conectando...';
                     btn.disabled = true;
 
-                    // 1. Recopilar historial
+                    // 1. Recopilar historial real
                     const history = [];
                     const today = new Date();
                     for(let i=15; i>=0; i--) {
@@ -177,49 +177,53 @@
                         const ds = d.toISOString().split('T')[0];
                         const entry = FamilyApp.state.menu[ds];
                         if(entry && (entry.c || entry.d)) {
-                            history.push(`${ds}: Comida:${entry.c || '?'}, Cena:${entry.d || '?'}`);
+                            history.push(`${ds}: C:${entry.c || '?'}, D:${entry.d || '?'}`);
                         }
                     }
 
-                    // 2. Preparar el envío (Formato exacto requerido por Google v1beta)
-                    const promptText = `Eres un nutricionista. Basándote en este historial de comidas: ${JSON.stringify(history)}, 
-                    genera un menú saludable para los próximos 7 días (desde mañana). 
-                    Responde EXCLUSIVAMENTE con un array JSON, sin texto antes ni después, con este formato:
-                    [{"date":"YYYY-MM-DD","c":"plato comida","d":"plato cena"}]`;
+                    // 2. Prompt con instrucciones de formato estrictas
+                    const promptText = `Actúa como nutricionista. Historial: ${JSON.stringify(history)}. 
+                    Genera un menú saludable para los próximos 7 días empezando mañana. 
+                    Responde ÚNICAMENTE un array JSON con este formato: [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
 
                     try {
-                        // URL con formato v1 (más estable para modelos flash)
-                        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`, {
+                        // URL CORREGIDA: Usamos v1beta pero con la estructura de modelos específica
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`, {
                             method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                contents: [{ parts: [{ text: promptText }] }]
+                                contents: [{ parts: [{ text: promptText }] }],
+                                generationConfig: {
+                                    temperature: 0.7,
+                                    topK: 1,
+                                    topP: 1,
+                                    maxOutputTokens: 2048,
+                                    responseMimeType: "application/json", // Forzamos respuesta JSON
+                                }
                             })
                         });
 
                         const data = await response.json();
 
-                        // Diagnóstico por si vuelve a fallar
                         if (data.error) {
-                            throw new Error(`Error de Google: ${data.error.message}`);
+                            throw new Error(data.error.message);
                         }
 
                         if (!data.candidates || !data.candidates[0]) {
-                            throw new Error("La IA no devolvió resultados. Revisa tu cuota de uso.");
+                            throw new Error("La IA no respondió. Verifica tu conexión.");
                         }
 
                         let text = data.candidates[0].content.parts[0].text;
                         
-                        // Limpiar posibles etiquetas de markdown
-                        const jsonMatch = text.match(/\[[\s\S]*\]/);
-                        if(!jsonMatch) throw new Error("La respuesta no contiene un JSON válido");
+                        // Si la IA devuelve el JSON dentro de bloques ```json ... ```, los limpiamos
+                        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                        const plan = JSON.parse(cleanJson);
                         
-                        const plan = JSON.parse(jsonMatch[0]);
                         FamilyApp.components.renderPlanResults(plan);
 
                     } catch (e) {
-                        console.error("Error completo:", e);
-                        alert("Fallo en la conexión: " + e.message);
+                        console.error("Error Gemini:", e);
+                        alert("Error de Google: " + e.message);
                     } finally {
                         btn.innerHTML = '✨ Generar Menú Inteligente';
                         btn.disabled = false;
@@ -361,4 +365,5 @@
     </script>
 </body>
 </html>
+
 

@@ -100,9 +100,9 @@
         const db = getDatabase(app);
         
         // Versión unificada v8 como pediste
-        const cloudRef = ref(db, 'family_v8');
-        const pinRef = ref(db, 'family_v8/config/accessPin');
-        const aiKeyRef = ref(db, 'family_v8/config/aiApiKey');
+        const cloudRef = ref(db, 'family_v9');
+        const pinRef = ref(db, 'family_v9/config/accessPin');
+        const aiKeyRef = ref(db, 'family_v9/config/aiApiKey');
 
         window.FamilyApp = {
             state: { menu: {}, shopping: [], dictionary: {} },
@@ -371,3 +371,4 @@
     </script>
 </body>
 </html>
+

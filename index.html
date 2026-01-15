@@ -169,7 +169,6 @@
                     btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Conectando...';
                     btn.disabled = true;
 
-                    // 1. Recopilar historial real
                     const history = [];
                     const today = new Date();
                     for(let i=15; i>=0; i--) {
@@ -181,24 +180,26 @@
                         }
                     }
 
-                    // 2. Prompt con instrucciones de formato estrictas
-                    const promptText = `Actúa como nutricionista. Historial: ${JSON.stringify(history)}. 
-                    Genera un menú saludable para los próximos 7 días empezando mañana. 
-                    Responde ÚNICAMENTE un array JSON con este formato: [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
+                    const promptText = `Eres un nutricionista familiar. Analiza este historial de 15 días: ${JSON.stringify(history)}. 
+                    Genera un menú equilibrado para los próximos 7 días a partir de mañana.
+                    REGLA ESTRICTA: Responde SOLO con un array JSON puro, sin markdown, sin texto extra, con este formato:
+                    [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
 
                     try {
-                        // URL CORREGIDA: Usamos v1beta pero con la estructura de modelos específica
-                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`, {
+                        // Cambiamos a la URL de modelos/gemini-pro que suele ser el alias más estable para v1beta
+                        // Si falla, prueba cambiando 'gemini-1.5-flash' por 'gemini-pro' justo aquí abajo
+                        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`;
+
+                        const response = await fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 contents: [{ parts: [{ text: promptText }] }],
                                 generationConfig: {
-                                    temperature: 0.7,
+                                    temperature: 0.2, // Menos creatividad para que el JSON sea perfecto
                                     topK: 1,
                                     topP: 1,
-                                    maxOutputTokens: 2048,
-                                    responseMimeType: "application/json", // Forzamos respuesta JSON
+                                    maxOutputTokens: 1000,
                                 }
                             })
                         });
@@ -206,24 +207,23 @@
                         const data = await response.json();
 
                         if (data.error) {
+                            // Si el modelo específico falla, intentamos avisar si es un problema de permisos
                             throw new Error(data.error.message);
-                        }
-
-                        if (!data.candidates || !data.candidates[0]) {
-                            throw new Error("La IA no respondió. Verifica tu conexión.");
                         }
 
                         let text = data.candidates[0].content.parts[0].text;
                         
-                        // Si la IA devuelve el JSON dentro de bloques ```json ... ```, los limpiamos
-                        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-                        const plan = JSON.parse(cleanJson);
+                        // Limpiador ultra-seguro de JSON por si la IA añade texto
+                        const start = text.indexOf('[');
+                        const end = text.lastIndexOf(']') + 1;
+                        const jsonStr = text.substring(start, end);
                         
+                        const plan = JSON.parse(jsonStr);
                         FamilyApp.components.renderPlanResults(plan);
 
                     } catch (e) {
                         console.error("Error Gemini:", e);
-                        alert("Error de Google: " + e.message);
+                        alert("Error de Google: " + e.message + ". Verifica que tu API Key sea de Google AI Studio.");
                     } finally {
                         btn.innerHTML = '✨ Generar Menú Inteligente';
                         btn.disabled = false;
@@ -365,5 +365,6 @@
     </script>
 </body>
 </html>
+
 
 

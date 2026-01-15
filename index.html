@@ -168,7 +168,6 @@
                     btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Conectando...';
                     btn.disabled = true;
 
-                    // 1. Historial simplificado
                     const history = [];
                     const today = new Date();
                     for(let i=10; i>=0; i--) {
@@ -180,39 +179,54 @@
 
                     const promptText = `Genera un menu saludable de 7 dias en JSON: [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]. Historial: ${JSON.stringify(history)}`;
 
-                    try {
-                        // RUTA DE EMERGENCIA: v1 (estática) y modelo flash
-                        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`;
+                    // Probaremos todas las combinaciones posibles que Google acepta
+                    const endpoints = [
+                        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+                        "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
+                        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+                    ];
 
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{ parts: [{ text: promptText }] }]
-                            })
-                        });
+                    let lastError = "";
 
-                        const data = await response.json();
+                    for (let url of endpoints) {
+                        try {
+                            console.log("Intentando con:", url);
+                            const response = await fetch(`${url}?key=${FamilyApp.geminiKey}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: [{ parts: [{ text: promptText }] }]
+                                })
+                            });
 
-                        if (data.error) {
-                            // Si aquí da error 400 o 404, la clave está mal generada o restringida
-                            throw new Error(`Google dice: ${data.error.message} (Código: ${data.error.code})`);
+                            const data = await response.json();
+
+                            if (data.error) {
+                                lastError = data.error.message;
+                                continue; // Probar la siguiente URL
+                            }
+
+                            if (data.candidates && data.candidates[0]) {
+                                let text = data.candidates[0].content.parts[0].text;
+                                const start = text.indexOf('[');
+                                const end = text.lastIndexOf(']') + 1;
+                                const plan = JSON.parse(text.substring(start, end));
+                                
+                                FamilyApp.components.renderPlanResults(plan);
+                                btn.innerHTML = '✨ Generar Menú Inteligente';
+                                btn.disabled = false;
+                                return; // ¡ÉXITO! Salimos de la función
+                            }
+                        } catch (e) {
+                            lastError = e.message;
                         }
-
-                        let text = data.candidates[0].content.parts[0].text;
-                        const start = text.indexOf('[');
-                        const end = text.lastIndexOf(']') + 1;
-                        const plan = JSON.parse(text.substring(start, end));
-                        
-                        FamilyApp.components.renderPlanResults(plan);
-
-                    } catch (e) {
-                        console.error("Error:", e);
-                        alert("ERROR CRÍTICO:\n" + e.message + "\n\nSi el error es 404/403, por favor genera una clave NUEVA en: aistudio.google.com");
-                    } finally {
-                        btn.innerHTML = '✨ Generar Menú Inteligente';
-                        btn.disabled = false;
                     }
+
+                    // Si llega aquí, es que todos han fallado
+                    alert("ERROR DE CONEXIÓN:\nGoogle no permite el acceso con esta clave. \n\nCausas probables:\n1. Estás en la UE y tu clave no tiene habilitado el pago (aunque sea gratis).\n2. La clave no es de AI Studio.\n3. Copiaste mal la clave.");
+                    console.error("Último error registrado:", lastError);
+                    btn.innerHTML = '✨ Generar Menú Inteligente';
+                    btn.disabled = false;
                 },
                 accept(date, type, val, id) {
                     if(!FamilyApp.state.menu[date]) FamilyApp.state.menu[date] = {c:'', d:''};
@@ -350,6 +364,7 @@
     </script>
 </body>
 </html>
+
 
 
 

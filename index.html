@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>App Salchipapas v9</title>
+    <title>App Salchipapas v10</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -34,7 +34,6 @@
         .day-cell:active { transform: scale(0.9); }
         .dot-menu { width: 5px; height: 5px; background: #4CC46D; border-radius: 50%; position: absolute; bottom: 6px; }
         
-        /* Estilos de Bloqueo */
         #lock-screen { position: fixed; inset: 0; background: #f8f7f7; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
         #app-content { display: none; }
     </style>
@@ -44,13 +43,13 @@
     <div id="lock-screen">
         <div class="mb-8 text-center">
             <div class="size-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span class="material-symbols-outlined text-primary text-4xl">lock</span>
+                <span class="material-symbols-outlined text-primary text-4xl" id="lockIcon">lock</span>
             </div>
             <h2 class="text-xl font-bold">App Salchipapas</h2>
-            <p class="text-sm text-gray-400">Introduce el PIN de acceso</p>
+            <p class="text-sm text-gray-400" id="lockMsg">Cargando seguridad...</p>
         </div>
-        <input type="password" id="pinInput" inputmode="numeric" placeholder="••••" class="w-32 text-center text-2xl tracking-[1em] rounded-2xl border-none shadow-sm p-4 mb-4 focus:ring-2 focus:ring-primary">
-        <button onclick="FamilyApp.security.checkPin()" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg">Entrar</button>
+        <input type="password" id="pinInput" inputmode="numeric" placeholder="••••" class="w-32 text-center text-2xl tracking-[1em] rounded-2xl border-none shadow-sm p-4 mb-4 focus:ring-2 focus:ring-primary" disabled>
+        <button id="btnLock" onclick="FamilyApp.security.checkPin()" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg opacity-50" disabled>Entrar</button>
         <p id="lockError" class="text-red-400 text-xs font-bold mt-4 hidden">PIN incorrecto</p>
     </div>
 
@@ -91,21 +90,36 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = { databaseURL: "https://familyhub-f33f9-default-rtdb.europe-west1.firebasedatabase.app/" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const cloudRef = ref(db, 'family_v9');
+        const pinRef = ref(db, 'family_v9/config/accessPin');
 
         window.FamilyApp = {
             state: { menu: {}, shopping: [], dictionary: {} },
             currentMonth: new Date(),
-            // --- CAMBIA EL PIN AQUÍ ---
-            PIN: "0912", 
+            remotePin: null,
 
-            init() {
-                // Comprobar si ya estaba desbloqueado en esta sesión
+            async init() {
+                // 1. Obtener PIN de Firebase
+                const snapshotPin = await get(pinRef);
+                if (snapshotPin.exists()) {
+                    this.remotePin = snapshotPin.val();
+                    document.getElementById('lockMsg').innerText = "Introduce el PIN de acceso";
+                } else {
+                    // Si no existe, configurar modo "Primer PIN"
+                    document.getElementById('lockMsg').innerText = "Crea tu PIN Maestro";
+                    document.getElementById('lockIcon').innerText = "fiber_new";
+                }
+
+                // Habilitar campos
+                document.getElementById('pinInput').disabled = false;
+                document.getElementById('btnLock').disabled = false;
+                document.getElementById('btnLock').classList.remove('opacity-50');
+
                 if(sessionStorage.getItem('unlocked') === 'true') this.security.unlock();
 
                 onValue(cloudRef, (snapshot) => {
@@ -118,7 +132,16 @@
             security: {
                 checkPin() {
                     const val = document.getElementById('pinInput').value;
-                    if(val === FamilyApp.PIN) {
+                    if (!val) return;
+
+                    // Si no hay PIN en Firebase, el primero que pongas se guarda como el PIN real
+                    if (!FamilyApp.remotePin) {
+                        set(pinRef, val);
+                        FamilyApp.remotePin = val;
+                        alert("¡PIN Maestro configurado con éxito!");
+                    }
+
+                    if(val === FamilyApp.remotePin) {
                         sessionStorage.setItem('unlocked', 'true');
                         this.unlock();
                     } else {
@@ -159,7 +182,7 @@
                                 <button onclick="FamilyApp.ui.openMenuModal('${ds}')" class="text-gray-300 material-symbols-outlined">edit_square</button>
                             </div>`;
                     }
-                    container.innerHTML = `<h2 class="text-2xl font-bold mb-6 px-1">Menú Semanal</h2><div class="space-y-3 mb-10">${weekHtml}</div><div class="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100"><h3 class="text-xs font-black uppercase tracking-widest text-primary mb-6 text-center">Histórico Mensual</h3><div class="flex justify-between items-center mb-6"><button onclick="FamilyApp.actions.changeMonth(-1)" class="material-symbols-outlined text-primary">chevron_left</button><span class="font-bold text-sm uppercase tracking-widest" id="calM"></span><button onclick="FamilyApp.actions.changeMonth(1)" class="material-symbols-outlined text-primary">chevron_right</button></div><div class="calendar-grid" id="gridMenu"></div></div>`;
+                    container.innerHTML = `<h2 class="text-2xl font-bold mb-6 px-1 text-[#101618]">Menú Semanal</h2><div class="space-y-3 mb-10">${weekHtml}</div><div class="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100"><h3 class="text-xs font-black uppercase tracking-widest text-primary mb-6 text-center">Histórico Mensual</h3><div class="flex justify-between items-center mb-6"><button onclick="FamilyApp.actions.changeMonth(-1)" class="material-symbols-outlined text-primary">chevron_left</button><span class="font-bold text-sm uppercase tracking-widest text-gray-700" id="calM"></span><button onclick="FamilyApp.actions.changeMonth(1)" class="material-symbols-outlined text-primary">chevron_right</button></div><div class="calendar-grid" id="gridMenu"></div></div>`;
                     document.getElementById('calM').innerText = new Intl.DateTimeFormat('es',{month:'long', year:'numeric'}).format(FamilyApp.currentMonth);
                     FamilyApp.ui.drawCalendar('gridMenu');
                 },
@@ -262,6 +285,4 @@
         FamilyApp.init();
     </script>
 </body>
-
 </html>
-

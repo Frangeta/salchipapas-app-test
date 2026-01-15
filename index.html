@@ -166,9 +166,10 @@
                     if(!FamilyApp.geminiKey) return this.configure();
 
                     const btn = document.getElementById('btnAiGen');
-                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Conectando...';
+                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Analizando...';
                     btn.disabled = true;
 
+                    // 1. Recopilar historial (aunque sean pocos días)
                     const history = [];
                     const today = new Date();
                     for(let i=15; i>=0; i--) {
@@ -180,50 +181,54 @@
                         }
                     }
 
-                    const promptText = `Eres un nutricionista familiar. Analiza este historial de 15 días: ${JSON.stringify(history)}. 
-                    Genera un menú equilibrado para los próximos 7 días a partir de mañana.
-                    REGLA ESTRICTA: Responde SOLO con un array JSON puro, sin markdown, sin texto extra, con este formato:
-                    [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
+                    // 2. Prompt mejorado para pocos datos
+                    const promptText = `Eres un nutricionista familiar. 
+                    Historial reciente: ${history.length > 0 ? JSON.stringify(history) : 'No hay datos previos todavia'}.
+                    Tarea: Genera un menú saludable para los próximos 7 días a partir de mañana.
+                    Instrucción: Si el historial es escaso, propón comidas variadas basadas en la dieta mediterránea. 
+                    Responde EXCLUSIVAMENTE un JSON con este formato: [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
 
                     try {
-                        // Cambiamos a la URL de modelos/gemini-pro que suele ser el alias más estable para v1beta
-                        // Si falla, prueba cambiando 'gemini-1.5-flash' por 'gemini-pro' justo aquí abajo
+                        // URL UNIVERSAL (v1beta es necesaria para Flash)
                         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`;
 
                         const response = await fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                contents: [{ parts: [{ text: promptText }] }],
-                                generationConfig: {
-                                    temperature: 0.2, // Menos creatividad para que el JSON sea perfecto
-                                    topK: 1,
-                                    topP: 1,
-                                    maxOutputTokens: 1000,
-                                }
+                                contents: [{ parts: [{ text: promptText }] }]
                             })
                         });
 
                         const data = await response.json();
 
+                        // Manejo de errores de API
                         if (data.error) {
-                            // Si el modelo específico falla, intentamos avisar si es un problema de permisos
+                            if (data.error.status === "INVALID_ARGUMENT") {
+                                throw new Error("La clave API es incorrecta o el formato del mensaje falló.");
+                            }
                             throw new Error(data.error.message);
+                        }
+
+                        if (!data.candidates || !data.candidates[0]) {
+                            throw new Error("Google no devolvió respuesta. Prueba de nuevo en unos segundos.");
                         }
 
                         let text = data.candidates[0].content.parts[0].text;
                         
-                        // Limpiador ultra-seguro de JSON por si la IA añade texto
+                        // Limpiador de texto extra
                         const start = text.indexOf('[');
                         const end = text.lastIndexOf(']') + 1;
-                        const jsonStr = text.substring(start, end);
+                        if (start === -1 || end === 0) throw new Error("La IA no generó el formato de menú correcto.");
                         
+                        const jsonStr = text.substring(start, end);
                         const plan = JSON.parse(jsonStr);
+                        
                         FamilyApp.components.renderPlanResults(plan);
 
                     } catch (e) {
-                        console.error("Error Gemini:", e);
-                        alert("Error de Google: " + e.message + ". Verifica que tu API Key sea de Google AI Studio.");
+                        console.error("Detalle del error:", e);
+                        alert("Error: " + e.message);
                     } finally {
                         btn.innerHTML = '✨ Generar Menú Inteligente';
                         btn.disabled = false;
@@ -365,6 +370,7 @@
     </script>
 </body>
 </html>
+
 
 
 

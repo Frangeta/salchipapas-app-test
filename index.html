@@ -162,10 +162,11 @@
                     }
                 },
             async generate() {
+                    // Ahora pedimos la clave de OpenAI
                     if(!FamilyApp.geminiKey) return this.configure();
 
                     const btn = document.getElementById('btnAiGen');
-                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Conectando con Gemini...';
+                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Consultando a ChatGPT...';
                     btn.disabled = true;
 
                     // 1. Recopilar historial (aunque sean solo 5 días)
@@ -176,30 +177,30 @@
                         const ds = d.toISOString().split('T')[0];
                         const entry = FamilyApp.state.menu[ds];
                         if(entry && (entry.c || entry.d)) {
-                            history.push(`${ds}: Comida:${entry.c || '?'}, Cena:${entry.d || '?'}`);
+                            history.push(`${ds}: C:${entry.c || '?'}, D:${entry.d || '?'}`);
                         }
                     }
 
-                    // 2. Prompt optimizado para pocos datos
                     const promptText = `Actúa como nutricionista familiar. 
-                    Historial disponible: ${history.length > 0 ? JSON.stringify(history) : 'Sin historial previo'}.
-                    Genera un menú saludable para los próximos 7 días empezando mañana. 
-                    Importante: Responde ÚNICAMENTE un array JSON puro, sin bloques de código markdown, con este formato:
-                    [{"date":"YYYY-MM-DD","c":"plato comida","d":"plato cena"}]`;
+                    Historial reciente: ${JSON.stringify(history)}.
+                    Genera un menú saludable para los próximos 7 días a partir de mañana.
+                    Responde ÚNICAMENTE un array JSON con este formato:
+                    [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
 
                     try {
-                        // URL v1beta con el modelo específico Flash (el más rápido y gratuito)
-                        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`;
-
-                        const response = await fetch(url, {
+                        const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${FamilyApp.geminiKey}` // Aquí irá tu clave de OpenAI
+                            },
                             body: JSON.stringify({
-                                contents: [{ parts: [{ text: promptText }] }],
-                                generationConfig: {
-                                    temperature: 0.2, // Baja creatividad = JSON más estable
-                                    responseMimeType: "application/json" // Obligamos a recibir JSON
-                                }
+                                model: "gpt-4o-mini", // El modelo más eficiente y económico
+                                messages: [
+                                    { role: "system", content: "Eres un asistente que solo responde con JSON puro." },
+                                    { role: "user", content: promptText }
+                                ],
+                                temperature: 0.7
                             })
                         });
 
@@ -209,13 +210,10 @@
                             throw new Error(data.error.message);
                         }
 
-                        if (!data.candidates || !data.candidates[0]) {
-                            throw new Error("No he recibido respuesta de la IA. Intenta de nuevo.");
-                        }
-
-                        let text = data.candidates[0].content.parts[0].text;
+                        // OpenAI devuelve la respuesta en data.choices[0].message.content
+                        let text = data.choices[0].message.content;
                         
-                        // Limpieza por si acaso la IA ignora el mimeType y manda texto
+                        // Extraer JSON por seguridad
                         const start = text.indexOf('[');
                         const end = text.lastIndexOf(']') + 1;
                         const plan = JSON.parse(text.substring(start, end));
@@ -223,8 +221,8 @@
                         FamilyApp.components.renderPlanResults(plan);
 
                     } catch (e) {
-                        console.error("Error Gemini:", e);
-                        alert("Error: " + e.message + "\n\nSi el error es 404, asegúrate de haber pegado la nueva clave correctamente.");
+                        console.error("Error OpenAI:", e);
+                        alert("Error de ChatGPT: " + e.message);
                     } finally {
                         btn.innerHTML = '✨ Generar Menú Inteligente';
                         btn.disabled = false;
@@ -366,6 +364,7 @@
     </script>
 </body>
 </html>
+
 
 
 

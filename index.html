@@ -168,78 +168,47 @@
                     btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Conectando...';
                     btn.disabled = true;
 
-                    // 1. Recopilar historial (aunque sean solo 5 días)
+                    // 1. Historial simplificado
                     const history = [];
                     const today = new Date();
-                    for(let i=15; i>=0; i--) {
+                    for(let i=10; i>=0; i--) {
                         const d = new Date(); d.setDate(today.getDate() - i);
                         const ds = d.toISOString().split('T')[0];
                         const entry = FamilyApp.state.menu[ds];
-                        if(entry && (entry.c || entry.d)) {
-                            history.push(`${ds}: C:${entry.c || '?'}, D:${entry.d || '?'}`);
-                        }
+                        if(entry && (entry.c || entry.d)) history.push(`${ds}: ${entry.c}/${entry.d}`);
                     }
 
-                    // 2. Prompt adaptativo según la cantidad de historial
-                    const contextMsg = history.length > 0 
-                        ? `Basándote en este historial de ${history.length} días: ${JSON.stringify(history)}`
-                        : "No hay historial previo, empieza de cero con una dieta equilibrada";
-
-                    const promptText = `Eres un nutricionista experto. ${contextMsg}. 
-                    Genera un menú saludable para los próximos 7 días empezando mañana. 
-                    Responde ÚNICAMENTE un array JSON (sin markdown) con este formato: 
-                    [{"date":"YYYY-MM-DD","c":"plato comida","d":"plato cena"}]`;
-
-                    // LISTA DE MODELOS A PROBAR (si uno falla, intenta el siguiente)
-                    const models = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-pro"];
-                    
-                    async function tryRequest(modelIndex) {
-                        if (modelIndex >= models.length) throw new Error("Ningún modelo de Google respondió. Revisa tu API Key.");
-                        
-                        const currentModel = models[modelIndex];
-                        const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${FamilyApp.geminiKey}`;
-
-                        try {
-                            const response = await fetch(url, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    contents: [{ parts: [{ text: promptText }] }],
-                                    generationConfig: { temperature: 0.3 }
-                                })
-                            });
-
-                            const data = await response.json();
-
-                            if (data.error) {
-                                console.warn(`Fallo con ${currentModel}: ${data.error.message}`);
-                                return tryRequest(modelIndex + 1); // Intentar el siguiente modelo
-                            }
-
-                            return data;
-                        } catch (err) {
-                            return tryRequest(modelIndex + 1);
-                        }
-                    }
+                    const promptText = `Genera un menu saludable de 7 dias en JSON: [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]. Historial: ${JSON.stringify(history)}`;
 
                     try {
-                        const data = await tryRequest(0);
+                        // RUTA DE EMERGENCIA: v1 (estática) y modelo flash
+                        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`;
 
-                        if (!data.candidates || !data.candidates[0]) throw new Error("Respuesta vacía");
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: promptText }] }]
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.error) {
+                            // Si aquí da error 400 o 404, la clave está mal generada o restringida
+                            throw new Error(`Google dice: ${data.error.message} (Código: ${data.error.code})`);
+                        }
 
                         let text = data.candidates[0].content.parts[0].text;
-                        
-                        // Limpiador ultra-seguro por si la IA devuelve texto antes del JSON
                         const start = text.indexOf('[');
                         const end = text.lastIndexOf(']') + 1;
-                        if (start === -1) throw new Error("Formato de menú no válido");
-                        
                         const plan = JSON.parse(text.substring(start, end));
+                        
                         FamilyApp.components.renderPlanResults(plan);
 
                     } catch (e) {
-                        console.error("Error final:", e);
-                        alert("Error de Google: " + e.message + "\n\nConsejo: Asegúrate de que tu clave es de Google AI Studio.");
+                        console.error("Error:", e);
+                        alert("ERROR CRÍTICO:\n" + e.message + "\n\nSi el error es 404/403, por favor genera una clave NUEVA en: aistudio.google.com");
                     } finally {
                         btn.innerHTML = '✨ Generar Menú Inteligente';
                         btn.disabled = false;
@@ -381,6 +350,7 @@
     </script>
 </body>
 </html>
+
 
 
 

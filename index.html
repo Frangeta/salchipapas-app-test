@@ -167,7 +167,7 @@
                 async generate() {
                     if(!FamilyApp.geminiKey) return this.configure();
                     const btn = document.getElementById('btnAiGen');
-                    btn.innerHTML = 'Generando...';
+                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Groq procesando...';
                     btn.disabled = true;
 
                     const history = [];
@@ -179,25 +179,50 @@
                         if(entry && (entry.c || entry.d)) history.push(`${ds}: C:${entry.c}, D:${entry.d}`);
                     }
 
-                    const promptText = `Eres nutricionista. Historial: ${JSON.stringify(history)}. Genera un menú saludable de 7 días empezando mañana. Devuelve SOLO un array JSON: [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
+                    const promptText = `Eres un nutricionista experto. Analiza este historial: ${JSON.stringify(history)}. 
+                    Genera un menú saludable para los próximos 7 días a partir de mañana.
+                    Responde ÚNICAMENTE con un array JSON puro, sin texto extra ni markdown, con este formato:
+                    [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
 
                     try {
-                        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${FamilyApp.geminiKey}`;
+                        // ENDPOINT DE GROQ (Compatible con formato OpenAI)
+                        const url = `https://api.groq.com/openai/v1/chat/completions`;
+
                         const response = await fetch(url, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${FamilyApp.geminiKey}` 
+                            },
+                            body: JSON.stringify({
+                                model: "llama-3.3-70b-versatile", // El modelo más potente de Groq actualmente
+                                messages: [
+                                    { role: "system", content: "Solo respondes con JSON puro." },
+                                    { role: "user", content: promptText }
+                                ],
+                                temperature: 0.5
+                            })
                         });
+
                         const data = await response.json();
-                        if (data.error) throw new Error(data.error.message);
+
+                        if (data.error) {
+                            throw new Error(data.error.message);
+                        }
+
+                        let text = data.choices[0].message.content;
                         
-                        let text = data.candidates[0].content.parts[0].text;
+                        // Limpieza de seguridad por si la IA añade texto extra
                         const start = text.indexOf('[');
                         const end = text.lastIndexOf(']') + 1;
+                        if (start === -1) throw new Error("La IA no devolvió un formato JSON válido.");
+                        
                         const plan = JSON.parse(text.substring(start, end));
                         FamilyApp.components.renderPlanResults(plan);
+
                     } catch (e) {
-                        alert("Error IA: " + e.message);
+                        console.error("Error Groq:", e);
+                        alert("Error de Groq: " + e.message + "\n\nVerifica que tu clave gsk_ sea correcta.");
                     } finally {
                         btn.innerHTML = '✨ Generar Menú Inteligente';
                         btn.disabled = false;
@@ -315,3 +340,4 @@
     </script>
 </body>
 </html>
+

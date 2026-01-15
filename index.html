@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>App Salchipapas v9</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#398fac",
+                        "success": "#4CC46D",
+                        "background-light": "#f8f7f7",
+                    },
+                    fontFamily: { "sans": ["Plus Jakarta Sans", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-item.active { color: #398fac; }
+        .nav-item.active span { font-variation-settings: 'FILL' 1; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .day-cell { min-height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 1rem; font-size: 0.75rem; transition: all 0.2s; border: 1px solid #f1f5f9; position: relative; }
+        .day-cell:active { transform: scale(0.9); }
+        .dot-menu { width: 5px; height: 5px; background: #4CC46D; border-radius: 50%; position: absolute; bottom: 6px; }
+        
+        /* Estilos de Bloqueo */
+        #lock-screen { position: fixed; inset: 0; background: #f8f7f7; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+        #app-content { display: none; }
+    </style>
+</head>
+<body class="bg-background-light text-[#101618] pb-28 min-h-screen">
+
+    <div id="lock-screen">
+        <div class="mb-8 text-center">
+            <div class="size-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-primary text-4xl">lock</span>
+            </div>
+            <h2 class="text-xl font-bold">App Salchipapas</h2>
+            <p class="text-sm text-gray-400">Introduce el PIN de acceso</p>
+        </div>
+        <input type="password" id="pinInput" inputmode="numeric" placeholder="••••" class="w-32 text-center text-2xl tracking-[1em] rounded-2xl border-none shadow-sm p-4 mb-4 focus:ring-2 focus:ring-primary">
+        <button onclick="FamilyApp.security.checkPin()" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg">Entrar</button>
+        <p id="lockError" class="text-red-400 text-xs font-bold mt-4 hidden">PIN incorrecto</p>
+    </div>
+
+    <div id="app-content">
+        <header class="sticky top-0 z-30 bg-background-light/80 backdrop-blur-md border-b border-gray-100">
+            <div class="flex items-center p-4 justify-between max-w-md mx-auto">
+                <div class="flex size-10 items-center overflow-hidden rounded-full border-2 border-primary/20">
+                    <div class="bg-center bg-no-repeat aspect-square bg-cover size-full" style='background-image: url("https://ui-avatars.com/api/?name=Salchipapas&background=398fac&color=fff");'></div>
+                </div>
+                <h1 class="text-lg font-bold tracking-tight text-primary">Salchipapas</h1>
+                <button onclick="FamilyApp.security.logout()" class="material-symbols-outlined text-gray-300">logout</button>
+            </div>
+        </header>
+
+        <main class="max-w-md mx-auto p-4 space-y-6">
+            <section id="menu" class="tab-content active"></section>
+            <section id="compra" class="tab-content"></section>
+        </main>
+
+        <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-100 px-12 py-4 flex justify-around items-center z-50 rounded-t-[2.5rem] shadow-xl">
+            <button onclick="FamilyApp.ui.switchTab('menu')" class="nav-item active flex flex-col items-center gap-1 text-gray-400" data-tab="menu">
+                <span class="material-symbols-outlined text-[30px]">restaurant</span>
+                <span class="text-[10px] font-bold uppercase tracking-widest">Menú</span>
+            </button>
+            <button onclick="FamilyApp.ui.switchTab('compra')" class="nav-item flex flex-col items-center gap-1 text-gray-400" data-tab="compra">
+                <span class="material-symbols-outlined text-[30px]">shopping_cart</span>
+                <span class="text-[10px] font-bold uppercase tracking-widest">Compra</span>
+            </button>
+        </nav>
+    </div>
+
+    <div id="modalOverlay" class="fixed inset-0 bg-[#101618]/40 backdrop-blur-sm z-[60] hidden flex items-end sm:items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div id="modalContent"></div>
+            <button onclick="FamilyApp.ui.closeModal()" class="w-full mt-6 text-gray-400 text-[10px] font-bold uppercase tracking-widest py-2">Cerrar</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = { databaseURL: "https://familyhub-f33f9-default-rtdb.europe-west1.firebasedatabase.app/" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const cloudRef = ref(db, 'family_v9');
+
+        window.FamilyApp = {
+            state: { menu: {}, shopping: [], dictionary: {} },
+            currentMonth: new Date(),
+            // --- CAMBIA EL PIN AQUÍ ---
+            PIN: "0912", 
+
+            init() {
+                // Comprobar si ya estaba desbloqueado en esta sesión
+                if(sessionStorage.getItem('unlocked') === 'true') this.security.unlock();
+
+                onValue(cloudRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) this.state = { ...this.state, ...data };
+                    this.render();
+                });
+            },
+
+            security: {
+                checkPin() {
+                    const val = document.getElementById('pinInput').value;
+                    if(val === FamilyApp.PIN) {
+                        sessionStorage.setItem('unlocked', 'true');
+                        this.unlock();
+                    } else {
+                        document.getElementById('lockError').classList.remove('hidden');
+                        document.getElementById('pinInput').value = '';
+                    }
+                },
+                unlock() {
+                    document.getElementById('lock-screen').style.display = 'none';
+                    document.getElementById('app-content').style.display = 'block';
+                },
+                logout() {
+                    sessionStorage.removeItem('unlocked');
+                    location.reload();
+                }
+            },
+
+            save() { set(cloudRef, this.state); },
+            render() { this.components.menu(); this.components.compra(); },
+
+            components: {
+                menu() {
+                    const container = document.getElementById('menu');
+                    let curr = new Date();
+                    let first = curr.getDate() - (curr.getDay() === 0 ? 6 : curr.getDay() - 1);
+                    let weekHtml = '';
+                    for(let i=0; i<7; i++){
+                        let d = new Date(new Date().setDate(first + i));
+                        let ds = d.toISOString().split('T')[0];
+                        let m = FamilyApp.state.menu[ds] || {c:'', d:''};
+                        weekHtml += `
+                            <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
+                                <div class="w-10 text-center text-primary"><p class="text-[9px] font-bold uppercase">${new Intl.DateTimeFormat('es',{weekday:'short'}).format(d)}</p><p class="text-lg font-bold">${d.getDate()}</p></div>
+                                <div class="flex-grow grid grid-cols-1 gap-1 text-xs border-l pl-4 text-gray-700">
+                                    <div class="truncate"><span class="font-bold text-primary/30 uppercase text-[9px]">C:</span> ${m.c || '---'}</div>
+                                    <div class="truncate"><span class="font-bold text-primary/30 uppercase text-[9px]">D:</span> ${m.d || '---'}</div>
+                                </div>
+                                <button onclick="FamilyApp.ui.openMenuModal('${ds}')" class="text-gray-300 material-symbols-outlined">edit_square</button>
+                            </div>`;
+                    }
+                    container.innerHTML = `<h2 class="text-2xl font-bold mb-6 px-1">Menú Semanal</h2><div class="space-y-3 mb-10">${weekHtml}</div><div class="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100"><h3 class="text-xs font-black uppercase tracking-widest text-primary mb-6 text-center">Histórico Mensual</h3><div class="flex justify-between items-center mb-6"><button onclick="FamilyApp.actions.changeMonth(-1)" class="material-symbols-outlined text-primary">chevron_left</button><span class="font-bold text-sm uppercase tracking-widest" id="calM"></span><button onclick="FamilyApp.actions.changeMonth(1)" class="material-symbols-outlined text-primary">chevron_right</button></div><div class="calendar-grid" id="gridMenu"></div></div>`;
+                    document.getElementById('calM').innerText = new Intl.DateTimeFormat('es',{month:'long', year:'numeric'}).format(FamilyApp.currentMonth);
+                    FamilyApp.ui.drawCalendar('gridMenu');
+                },
+                compra() {
+                    const container = document.getElementById('compra');
+                    const items = FamilyApp.state.shopping || [];
+                    const pending = items.filter(i => !i.checked);
+                    const done = items.filter(i => i.checked);
+                    const grouped = {};
+                    pending.forEach(i => { const cat = i.category || '📦 Otros'; if(!grouped[cat]) grouped[cat] = []; grouped[cat].push(i); });
+                    let listHtml = '';
+                    Object.keys(grouped).sort().forEach(cat => {
+                        listHtml += `<div class="mb-6"><h3 class="text-[10px] font-black uppercase text-primary tracking-widest mb-3 ml-1">${cat}</h3><div class="space-y-2">${grouped[cat].map(i => `<div class="bg-white p-3 pl-4 rounded-2xl border border-gray-100 flex items-center justify-between shadow-sm active:scale-95 transition-transform"><div onclick="FamilyApp.actions.toggleShop(${i.id})" class="flex items-center gap-3 flex-grow cursor-pointer"><span class="material-symbols-outlined text-gray-200">circle</span><span class="font-semibold text-sm text-gray-700">${i.name}</span></div><button onclick="FamilyApp.ui.openCategoryModal(${i.id}, '${i.name}')" class="p-2 text-gray-300"><span class="material-symbols-outlined text-lg">label</span></button></div>`).join('')}</div></div>`;
+                    });
+                    container.innerHTML = `<h2 class="text-2xl font-bold mb-6 px-1">Lista Compra</h2><div class="flex gap-2 mb-8"><input type="text" id="shopMain" placeholder="Añadir..." class="flex-grow rounded-2xl border-none bg-white shadow-sm p-4 text-sm focus:ring-2 focus:ring-primary"><button onclick="FamilyApp.actions.addItem('shopMain')" class="bg-primary text-white rounded-2xl w-14 shadow-lg flex items-center justify-center"><span class="material-symbols-outlined font-bold">add</span></button></div>${listHtml || '<p class="text-center py-12 text-gray-300 italic text-sm">Lista vacía</p>'}${done.length ? `<div class="mt-8 pt-6 border-t border-gray-100 opacity-40"><div class="flex justify-between items-center mb-4"><h3 class="text-xs font-bold uppercase tracking-widest">Ya comprados</h3><button onclick="FamilyApp.actions.clearShop()" class="text-[10px] font-bold text-red-400">BORRAR</button></div>${done.map(i => `<div onclick="FamilyApp.actions.toggleShop(${i.id})" class="flex items-center gap-3 p-2 text-sm line-through"><span class="material-symbols-outlined text-success">check_circle</span>${i.name}</div>`).join('')}</div>` : ''}`;
+                }
+            },
+
+            actions: {
+                addItem(inputId) {
+                    const inp = document.getElementById(inputId);
+                    const val = inp.value.trim();
+                    if(!val) return;
+                    let category = '📦 Otros';
+                    const lower = val.toLowerCase();
+                    for (const [cat, words] of Object.entries(FamilyApp.state.dictionary || {})) { if (words.some(w => lower.includes(w))) { category = cat; break; } }
+                    if(!FamilyApp.state.shopping) FamilyApp.state.shopping = [];
+                    FamilyApp.state.shopping.push({ id: Date.now(), name: val, checked: false, category });
+                    inp.value = ''; FamilyApp.save();
+                },
+                toggleShop(id) {
+                    const i = FamilyApp.state.shopping.find(x => x.id === id);
+                    if(i) i.checked = !i.checked;
+                    FamilyApp.save();
+                },
+                clearShop() {
+                    FamilyApp.state.shopping = FamilyApp.state.shopping.filter(i => !i.checked);
+                    FamilyApp.save();
+                },
+                learnCategory(itemId, cat) {
+                    const item = FamilyApp.state.shopping.find(i => i.id === itemId);
+                    item.category = cat;
+                    if(!FamilyApp.state.dictionary[cat]) FamilyApp.state.dictionary[cat] = [];
+                    const word = item.name.toLowerCase();
+                    if(!FamilyApp.state.dictionary[cat].includes(word)) FamilyApp.state.dictionary[cat].push(word);
+                    FamilyApp.save(); FamilyApp.ui.closeModal();
+                },
+                changeMonth(v) { FamilyApp.currentMonth.setMonth(FamilyApp.currentMonth.getMonth() + v); FamilyApp.render(); }
+            },
+
+            ui: {
+                switchTab(id) {
+                    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    document.getElementById(id).classList.add('active');
+                    document.querySelector(`[data-tab="${id}"]`).classList.add('active');
+                },
+                openMenuModal(ds) {
+                    const m = FamilyApp.state.menu[ds] || {c:'', d:''};
+                    FamilyApp.ui.openModal(`
+                        <h3 class="font-bold text-center text-primary mb-6 uppercase text-[10px] tracking-[0.2em]">${ds}</h3>
+                        <div class="space-y-4 mb-8">
+                            <div><label class="text-[10px] font-bold text-gray-300 uppercase ml-2 tracking-widest">Comida</label><input type="text" id="mC" value="${m.c}" class="w-full rounded-2xl border-none bg-gray-50 p-4 mt-1"></div>
+                            <div><label class="text-[10px] font-bold text-gray-300 uppercase ml-2 tracking-widest">Cena</label><input type="text" id="mD" value="${m.d}" class="w-full rounded-2xl border-none bg-gray-50 p-4 mt-1"></div>
+                        </div>
+                        <div class="bg-primary/5 p-4 rounded-3xl border border-primary/10 mb-6 text-center">
+                            <p class="text-[10px] font-black text-primary uppercase mb-3">¿Falta algo?</p>
+                            <div class="flex gap-2">
+                                <input type="text" id="shopModal" placeholder="Ej: Pan..." class="flex-grow rounded-xl border-none text-sm p-3 shadow-inner">
+                                <button onclick="FamilyApp.actions.addItem('shopModal')" class="bg-primary text-white rounded-xl px-4 font-bold text-xl">+</button>
+                            </div>
+                        </div>
+                        <button onclick="FamilyApp.state.menu['${ds}']={c:document.getElementById('mC').value, d:document.getElementById('mD').value}; FamilyApp.save(); FamilyApp.ui.closeModal()" class="w-full bg-[#101618] text-white py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest">Guardar Cambios</button>
+                    `);
+                },
+                openCategoryModal(id, name) {
+                    const cats = ['🍎 Frutería', '🥩 Carnicería', '🐟 Pescadería', '🥛 Lácteos', '🍞 Panadería', '🧹 Limpieza', '🥤 Bebidas', '🚿 Baño'];
+                    FamilyApp.ui.openModal(`<h3 class="font-bold text-center mb-6 uppercase text-[10px] text-gray-400">Sección para "${name}"</h3><div class="grid grid-cols-2 gap-2">${cats.map(c => `<button onclick="FamilyApp.actions.learnCategory(${id}, '${c}')" class="p-3 bg-gray-50 rounded-xl text-[11px] font-bold text-left border border-gray-100 hover:bg-primary hover:text-white">${c}</button>`).join('')}</div>`);
+                },
+                drawCalendar(tid) {
+                    const g = document.getElementById(tid); g.innerHTML = '';
+                    const y = FamilyApp.currentMonth.getFullYear(), m = FamilyApp.currentMonth.getMonth();
+                    const first = (new Date(y, m, 1).getDay() + 6) % 7;
+                    for(let i=0; i<first; i++) g.innerHTML += '<div></div>';
+                    for(let d=1; d<=new Date(y, m+1, 0).getDate(); d++){
+                        const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                        const hasMenu = FamilyApp.state.menu[ds] && (FamilyApp.state.menu[ds].c || FamilyApp.state.menu[ds].d);
+                        const c = document.createElement('div');
+                        c.className = 'day-cell bg-white';
+                        c.innerHTML = `<span>${d}</span>${hasMenu ? '<div class="dot-menu"></div>' : ''}`;
+                        c.onclick = () => FamilyApp.ui.openMenuModal(ds);
+                        g.appendChild(c);
+                    }
+                },
+                openModal(h) { document.getElementById('modalContent').innerHTML = h; document.getElementById('modalOverlay').classList.remove('hidden'); },
+                closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
+            }
+        };
+
+        FamilyApp.init();
+    </script>
+</body>
+
+</html>
+

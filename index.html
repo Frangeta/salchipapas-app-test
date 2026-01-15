@@ -104,18 +104,15 @@
             remotePin: null,
 
             async init() {
-                // 1. Obtener PIN de Firebase
                 const snapshotPin = await get(pinRef);
                 if (snapshotPin.exists()) {
                     this.remotePin = snapshotPin.val();
                     document.getElementById('lockMsg').innerText = "Introduce el PIN de acceso";
                 } else {
-                    // Si no existe, configurar modo "Primer PIN"
                     document.getElementById('lockMsg').innerText = "Crea tu PIN Maestro";
                     document.getElementById('lockIcon').innerText = "fiber_new";
                 }
 
-                // Habilitar campos
                 document.getElementById('pinInput').disabled = false;
                 document.getElementById('btnLock').disabled = false;
                 document.getElementById('btnLock').classList.remove('opacity-50');
@@ -133,14 +130,11 @@
                 checkPin() {
                     const val = document.getElementById('pinInput').value;
                     if (!val) return;
-
-                    // Si no hay PIN en Firebase, el primero que pongas se guarda como el PIN real
                     if (!FamilyApp.remotePin) {
                         set(pinRef, val);
                         FamilyApp.remotePin = val;
                         alert("¡PIN Maestro configurado con éxito!");
                     }
-
                     if(val === FamilyApp.remotePin) {
                         sessionStorage.setItem('unlocked', 'true');
                         this.unlock();
@@ -174,10 +168,19 @@
                         let m = FamilyApp.state.menu[ds] || {c:'', d:''};
                         weekHtml += `
                             <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
-                                <div class="w-10 text-center text-primary"><p class="text-[9px] font-bold uppercase">${new Intl.DateTimeFormat('es',{weekday:'short'}).format(d)}</p><p class="text-lg font-bold">${d.getDate()}</p></div>
+                                <div class="w-10 text-center text-primary">
+                                    <p class="text-[9px] font-bold uppercase">${new Intl.DateTimeFormat('es',{weekday:'short'}).format(d)}</p>
+                                    <p class="text-lg font-bold">${d.getDate()}</p>
+                                </div>
                                 <div class="flex-grow grid grid-cols-1 gap-1 text-xs border-l pl-4 text-gray-700">
-                                    <div class="truncate"><span class="font-bold text-primary/30 uppercase text-[9px]">C:</span> ${m.c || '---'}</div>
-                                    <div class="truncate"><span class="font-bold text-primary/30 uppercase text-[9px]">D:</span> ${m.d || '---'}</div>
+                                    <div class="flex items-center gap-2 truncate">
+                                        <span class="material-symbols-outlined text-[14px] text-amber-400">light_mode</span>
+                                        ${m.c || '---'}
+                                    </div>
+                                    <div class="flex items-center gap-2 truncate">
+                                        <span class="material-symbols-outlined text-[14px] text-indigo-400">dark_mode</span>
+                                        ${m.d || '---'}
+                                    </div>
                                 </div>
                                 <button onclick="FamilyApp.ui.openMenuModal('${ds}')" class="text-gray-300 material-symbols-outlined">edit_square</button>
                             </div>`;

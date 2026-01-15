@@ -178,11 +178,20 @@
                         const entry = FamilyApp.state.menu[ds];
                         if(entry) history.push(`${ds}: C:${entry.c}, D:${entry.d}`);
                     }
-
-                    const promptText = `Eres nutricionista. Analiza historial familiar: ${JSON.stringify(history)}.
-                    Genera el menú exclusivamente para la PRÓXIMA SEMANA (del Lunes ${formatDate(nextMonday)} al Domingo ${formatDate(nextSunday)}).
-                    Ignora los días que queden de esta semana actual.
-                    Responde SOLO con un array JSON puro: [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
+                    
+                    // PROMPT MEJORADO
+                    const promptText = `Eres un nutricionista experto en nutrición infantil y familiar. 
+                    Tu misión es diseñar un menú para una familia de 2 adultos y 2 niños (9 y 13 años).
+                    
+                    CRITERIOS DE DISEÑO:
+                    1. SABOR Y DIVERSIÓN: Los platos deben ser atractivos para los niños, con nombres sugerentes y buen sabor, pero utilizando ingredientes 100% sanos y naturales.
+                    2. EQUILIBRIO: Asegura proteínas de calidad, verduras escondidas o presentadas de forma divertida, e hidratos complejos.
+                    3. EVITAR REPETICIÓN: Revisa el historial de las últimas 2 semanas para no repetir platos: ${JSON.stringify(history)}.
+                    4. RANGO DE FECHAS: Genera el menú exclusivamente para la PRÓXIMA SEMANA (del Lunes ${formatDate(nextMonday)} al Domingo ${formatDate(nextSunday)}). Ignora los días restantes de esta semana.
+                
+                    FORMATO DE RESPUESTA:
+                    Responde ÚNICAMENTE con un array JSON puro, sin texto adicional, con este formato: 
+                    [{"date":"YYYY-MM-DD","c":"nombre de la comida divertida","d":"nombre de la cena sana"}]`;
 
                     try {
                         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -348,3 +357,4 @@
     </script>
 </body>
 </html>
+

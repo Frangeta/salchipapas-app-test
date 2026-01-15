@@ -161,15 +161,14 @@
                         FamilyApp.components.planner();
                     }
                 },
-
-                async generate() {
+            async generate() {
                     if(!FamilyApp.geminiKey) return this.configure();
 
                     const btn = document.getElementById('btnAiGen');
-                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Analizando...';
+                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Conectando...';
                     btn.disabled = true;
 
-                    // 1. Recopilar historial (manejando el caso de pocos días)
+                    // 1. Recopilar historial (aunque sean solo 5 días)
                     const history = [];
                     const today = new Date();
                     for(let i=15; i>=0; i--) {
@@ -181,60 +180,66 @@
                         }
                     }
 
-                    const promptText = `Eres un nutricionista. Historial: ${JSON.stringify(history)}. 
-                    Genera un menú equilibrado para los próximos 7 días. 
-                    Responde ÚNICAMENTE un array JSON con este formato: [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
+                    // 2. Prompt adaptativo según la cantidad de historial
+                    const contextMsg = history.length > 0 
+                        ? `Basándote en este historial de ${history.length} días: ${JSON.stringify(history)}`
+                        : "No hay historial previo, empieza de cero con una dieta equilibrada";
 
-                    // Intentaremos con gemini-1.5-flash, y si falla, el código está listo para ser modificado a gemini-pro
-                    const modelName = "gemini-1.5-flash"; 
+                    const promptText = `Eres un nutricionista experto. ${contextMsg}. 
+                    Genera un menú saludable para los próximos 7 días empezando mañana. 
+                    Responde ÚNICAMENTE un array JSON (sin markdown) con este formato: 
+                    [{"date":"YYYY-MM-DD","c":"plato comida","d":"plato cena"}]`;
+
+                    // LISTA DE MODELOS A PROBAR (si uno falla, intenta el siguiente)
+                    const models = ["gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-pro"];
+                    
+                    async function tryRequest(modelIndex) {
+                        if (modelIndex >= models.length) throw new Error("Ningún modelo de Google respondió. Revisa tu API Key.");
+                        
+                        const currentModel = models[modelIndex];
+                        const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${FamilyApp.geminiKey}`;
+
+                        try {
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: [{ parts: [{ text: promptText }] }],
+                                    generationConfig: { temperature: 0.3 }
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            if (data.error) {
+                                console.warn(`Fallo con ${currentModel}: ${data.error.message}`);
+                                return tryRequest(modelIndex + 1); // Intentar el siguiente modelo
+                            }
+
+                            return data;
+                        } catch (err) {
+                            return tryRequest(modelIndex + 1);
+                        }
+                    }
 
                     try {
-                        // Usamos la versión v1beta que es la que soporta Flash actualmente
-                        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${FamilyApp.geminiKey}`;
+                        const data = await tryRequest(0);
 
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{ parts: [{ text: promptText }] }],
-                                generationConfig: {
-                                    temperature: 0.1, // Mínima creatividad para asegurar el JSON
-                                    responseMimeType: "application/json"
-                                }
-                            })
-                        });
-
-                        const data = await response.json();
-
-                        if (data.error) {
-                            // ERROR CLAVE: Si el modelo no se encuentra, es probable que necesites activar 
-                            // el modelo en tu Google AI Studio o usar el nombre "gemini-pro"
-                            throw new Error(data.error.message);
-                        }
-
-                        if (!data.candidates || !data.candidates[0]) {
-                            throw new Error("Respuesta vacía de la IA.");
-                        }
+                        if (!data.candidates || !data.candidates[0]) throw new Error("Respuesta vacía");
 
                         let text = data.candidates[0].content.parts[0].text;
                         
-                        // Limpieza de seguridad
+                        // Limpiador ultra-seguro por si la IA devuelve texto antes del JSON
                         const start = text.indexOf('[');
                         const end = text.lastIndexOf(']') + 1;
-                        const plan = JSON.parse(text.substring(start, end));
+                        if (start === -1) throw new Error("Formato de menú no válido");
                         
+                        const plan = JSON.parse(text.substring(start, end));
                         FamilyApp.components.renderPlanResults(plan);
 
                     } catch (e) {
-                        console.error("Error técnico:", e);
-                        
-                        // Si el error es específicamente que no encuentra el modelo, 
-                        // sugerimos al usuario que cambie el nombre del modelo manualmente
-                        if(e.message.includes("not found")) {
-                            alert("Google no reconoce 'gemini-1.5-flash'. Intenta entrar en Google AI Studio y verifica que el modelo está disponible en tu región.");
-                        } else {
-                            alert("Error: " + e.message);
-                        }
+                        console.error("Error final:", e);
+                        alert("Error de Google: " + e.message + "\n\nConsejo: Asegúrate de que tu clave es de Google AI Studio.");
                     } finally {
                         btn.innerHTML = '✨ Generar Menú Inteligente';
                         btn.disabled = false;
@@ -376,6 +381,7 @@
     </script>
 </body>
 </html>
+
 
 
 

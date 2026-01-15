@@ -179,7 +179,7 @@
                         if(entry && (entry.c || entry.d)) history.push(`${ds}: C:${entry.c}, D:${entry.d}`);
                     }
 
-                    const promptText = `Eres un nutricionista experto. Analiza este historial: ${JSON.stringify(history)}. 
+                    const promptText = `Eres un nutricionista experto, piensa en comidas y cenas para una familia de 2 adultos y dos niños de 10 y 13 años, tienen que ser comidas y cenas variadas, con ingredientes sanos, pero que sean divertidas. Analiza este historial: ${JSON.stringify(history)}. 
                     Genera un menú saludable para los próximos 7 días a partir de mañana.
                     Responde ÚNICAMENTE con un array JSON puro, sin texto extra ni markdown, con este formato:
                     [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
@@ -340,4 +340,5 @@
     </script>
 </body>
 </html>
+
 

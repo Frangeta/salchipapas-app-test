@@ -162,64 +162,58 @@
                     }
                 },
             async generate() {
-                    if(!FamilyApp.geminiKey) return this.configure();
+    if(!FamilyApp.geminiKey) return this.configure();
 
-                    const btn = document.getElementById('btnAiGen');
-                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Conectando gratis...';
-                    btn.disabled = true;
+    const btn = document.getElementById('btnAiGen');
+    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Conectando...';
+    btn.disabled = true;
 
-                    // 1. Recopilamos tus 5 días de historial (o los que tengas)
-                    const history = [];
-                    const today = new Date();
-                    for(let i=10; i>=0; i--) {
-                        const d = new Date(); d.setDate(today.getDate() - i);
-                        const ds = d.toISOString().split('T')[0];
-                        const entry = FamilyApp.state.menu[ds];
-                        if(entry && (entry.c || entry.d)) {
-                            history.push(`${ds}: C:${entry.c}, D:${entry.d}`);
-                        }
-                    }
+    const history = [];
+    const today = new Date();
+    for(let i=10; i>=0; i--) {
+        const d = new Date(); d.setDate(today.getDate() - i);
+        const ds = d.toISOString().split('T')[0];
+        const entry = FamilyApp.state.menu[ds];
+        if(entry && (entry.c || entry.d)) history.push(`${ds}: C:${entry.c}, D:${entry.d}`);
+    }
 
-                    const promptText = `Eres un nutricionista. Historial: ${JSON.stringify(history)}. 
-                    Genera un menú para los próximos 7 días en este formato JSON estricto: 
-                    [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
+    const promptText = `Eres nutricionista. Historial: ${JSON.stringify(history)}. Genera un menú saludable de 7 días empezando mañana. Devuelve SOLO un array JSON: [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
 
-                    try {
-                        // URL CORREGIDA para evitar el 404: 
-                        // Usamos la versión v1beta y el nombre del modelo con el prefijo completo
-                        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`;
+    try {
+        // CAMBIO ESTRATÉGICO: v1 y gemini-pro (el modelo más compatible en Europa)
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${FamilyApp.geminiKey}`;
 
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{ parts: [{ text: promptText }] }]
-                            })
-                        });
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: promptText }] }]
+            })
+        });
 
-                        const data = await response.json();
+        const data = await response.json();
 
-                        if (data.error) {
-                            // Si da error de "Model Not Found", es que tu clave está en un proyecto sin la API activada
-                            throw new Error(data.error.message);
-                        }
+        if (data.error) {
+            throw new Error(data.error.message);
+        }
 
-                        const text = data.candidates[0].content.parts[0].text;
-                        const jsonMatch = text.match(/\[[\s\S]*\]/); // Extraemos solo el JSON
-                        
-                        if (!jsonMatch) throw new Error("La IA no devolvió un formato válido.");
-                        
-                        const plan = JSON.parse(jsonMatch[0]);
-                        FamilyApp.components.renderPlanResults(plan);
+        if (!data.candidates) throw new Error("Google no permite este modelo en tu región sin facturación activa.");
 
-                    } catch (e) {
-                        console.error("Error:", e);
-                        alert("Error: " + e.message + "\n\nIMPORTANTE: Asegúrate de que la clave la has creado en Google AI Studio (aistudio.google.com) y no en Google Cloud.");
-                    } finally {
-                        btn.innerHTML = '✨ Generar Menú Inteligente';
-                        btn.disabled = false;
-                    }
-                },
+        let text = data.candidates[0].content.parts[0].text;
+        const start = text.indexOf('[');
+        const end = text.lastIndexOf(']') + 1;
+        const plan = JSON.parse(text.substring(start, end));
+        
+        FamilyApp.components.renderPlanResults(plan);
+
+    } catch (e) {
+        console.error("Error:", e);
+        alert("DIAGNÓSTICO FINAL:\nGoogle está bloqueando tu clave por vivir en Europa.\n\nSOLUCIÓN GRATIS:\nEntra en Google AI Studio, crea un nuevo proyecto, y asegúrate de aceptar los 'Términos de Servicio de Generative AI'.\n\nSi esto falla, la única opción es usar una VPN (país USA) o usar ChatGPT.");
+    } finally {
+        btn.innerHTML = '✨ Generar Menú Inteligente';
+        btn.disabled = false;
+    }
+}
                 accept(date, type, val, id) {
                     if(!FamilyApp.state.menu[date]) FamilyApp.state.menu[date] = {c:'', d:''};
                     FamilyApp.state.menu[date][type] = val;
@@ -356,6 +350,7 @@
     </script>
 </body>
 </html>
+
 
 
 

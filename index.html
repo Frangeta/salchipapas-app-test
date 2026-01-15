@@ -196,54 +196,54 @@
                     if(!FamilyApp.geminiKey) return this.configure();
 
                     const btn = document.getElementById('btnAiGen');
-                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Pensando...';
+                    const originalBtnContent = btn.innerHTML;
+                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Analizando historial...';
                     btn.disabled = true;
 
-                    // 1. Obtener historial (últimos 15 días)
+                    // 1. Obtener historial (últimos 15 días) para dar contexto
                     const history = [];
                     const today = new Date();
-                    for(let i=15; i>0; i--) {
+                    for(let i=15; i>=0; i--) {
                         const d = new Date(); d.setDate(today.getDate() - i);
                         const ds = d.toISOString().split('T')[0];
-                        if(FamilyApp.state.menu[ds]) history.push(`${ds}: ${FamilyApp.state.menu[ds].c} / ${FamilyApp.state.menu[ds].d}`);
+                        if(FamilyApp.state.menu[ds]) {
+                            history.push(`${ds}: C:${FamilyApp.state.menu[ds].c || 'nada'}, D:${FamilyApp.state.menu[ds].d || 'nada'}`);
+                        }
                     }
 
-                    // 2. Construir Prompt
-                    const promptText = `
-                        Actúa como un nutricionista familiar experto.
-                        Historial de los últimos 15 días: ${JSON.stringify(history)}.
-                        Tarea: Genera un plan de comidas (Comida y Cena) para los PRÓXIMOS 7 días a partir de mañana.
-                        Reglas:
-                        1. Dieta equilibrada y mediterránea.
-                        2. No repitas plato principal dos días seguidos.
-                        3. Cena más ligera que la comida.
-                        4. IMPORTANTE: Devuelve SOLO un JSON puro (sin markdown, sin explicaciones) con este formato exacto:
-                        [
-                            {"date": "YYYY-MM-DD", "c": "Plato Comida", "d": "Plato Cena"},
-                            ... (7 días)
-                        ]
-                        Las fechas deben ser reales comenzando mañana.
-                    `;
+                    // 2. Construir Prompt científico
+                    const promptText = `Actúa como nutricionista. Historial reciente: ${JSON.stringify(history)}. 
+                    Genera un menú saludable para los próximos 7 días (empezando mañana). 
+                    Devuelve SOLO un array JSON con este formato exacto: 
+                    [{"date":"YYYY-MM-DD","c":"Comida","d":"Cena"}]`;
 
                     try {
+                        // URL actualizada a la v1beta (más compatible con flash)
                         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`, {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: promptText }] }]
+                            })
                         });
+
+                        if (!response.ok) throw new Error(`Error API: ${response.status}`);
 
                         const data = await response.json();
                         let text = data.candidates[0].content.parts[0].text;
-                        // Limpiar markdown si Gemini lo pone
-                        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
                         
-                        const plan = JSON.parse(text);
+                        // Limpieza agresiva de la respuesta para obtener solo el JSON
+                        const jsonMatch = text.match(/\[[\s\S]*\]/);
+                        if (!jsonMatch) throw new Error("La IA no devolvió un formato válido.");
+                        
+                        const plan = JSON.parse(jsonMatch[0]);
                         FamilyApp.components.renderPlanResults(plan);
 
                     } catch (e) {
-                        console.error(e);
-                        alert("Error al conectar con la IA. Revisa la Key o intenta de nuevo.");
-                        btn.innerHTML = '✨ Generar Menú Inteligente';
+                        console.error("Error detallado:", e);
+                        alert("Error al conectar con Gemini. Verifica que tu API Key sea correcta y tenga permisos para 'Gemini 1.5 Flash'.");
+                    } finally {
+                        btn.innerHTML = originalBtnContent;
                         btn.disabled = false;
                     }
                 },
@@ -484,3 +484,4 @@
     </script>
 </body>
 </html>
+

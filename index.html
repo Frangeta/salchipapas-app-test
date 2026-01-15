@@ -162,67 +162,59 @@
                     }
                 },
             async generate() {
-                    // Ahora pedimos la clave de OpenAI
                     if(!FamilyApp.geminiKey) return this.configure();
 
                     const btn = document.getElementById('btnAiGen');
-                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Consultando a ChatGPT...';
+                    btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Conectando gratis...';
                     btn.disabled = true;
 
-                    // 1. Recopilar historial (aunque sean solo 5 días)
+                    // 1. Recopilamos tus 5 días de historial (o los que tengas)
                     const history = [];
                     const today = new Date();
-                    for(let i=15; i>=0; i--) {
+                    for(let i=10; i>=0; i--) {
                         const d = new Date(); d.setDate(today.getDate() - i);
                         const ds = d.toISOString().split('T')[0];
                         const entry = FamilyApp.state.menu[ds];
                         if(entry && (entry.c || entry.d)) {
-                            history.push(`${ds}: C:${entry.c || '?'}, D:${entry.d || '?'}`);
+                            history.push(`${ds}: C:${entry.c}, D:${entry.d}`);
                         }
                     }
 
-                    const promptText = `Actúa como nutricionista familiar. 
-                    Historial reciente: ${JSON.stringify(history)}.
-                    Genera un menú saludable para los próximos 7 días a partir de mañana.
-                    Responde ÚNICAMENTE un array JSON con este formato:
+                    const promptText = `Eres un nutricionista. Historial: ${JSON.stringify(history)}. 
+                    Genera un menú para los próximos 7 días en este formato JSON estricto: 
                     [{"date":"YYYY-MM-DD","c":"comida","d":"cena"}]`;
 
                     try {
-                        const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
+                        // URL CORREGIDA para evitar el 404: 
+                        // Usamos la versión v1beta y el nombre del modelo con el prefijo completo
+                        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`;
+
+                        const response = await fetch(url, {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${FamilyApp.geminiKey}` // Aquí irá tu clave de OpenAI
-                            },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                model: "gpt-4o-mini", // El modelo más eficiente y económico
-                                messages: [
-                                    { role: "system", content: "Eres un asistente que solo responde con JSON puro." },
-                                    { role: "user", content: promptText }
-                                ],
-                                temperature: 0.7
+                                contents: [{ parts: [{ text: promptText }] }]
                             })
                         });
 
                         const data = await response.json();
 
                         if (data.error) {
+                            // Si da error de "Model Not Found", es que tu clave está en un proyecto sin la API activada
                             throw new Error(data.error.message);
                         }
 
-                        // OpenAI devuelve la respuesta en data.choices[0].message.content
-                        let text = data.choices[0].message.content;
+                        const text = data.candidates[0].content.parts[0].text;
+                        const jsonMatch = text.match(/\[[\s\S]*\]/); // Extraemos solo el JSON
                         
-                        // Extraer JSON por seguridad
-                        const start = text.indexOf('[');
-                        const end = text.lastIndexOf(']') + 1;
-                        const plan = JSON.parse(text.substring(start, end));
+                        if (!jsonMatch) throw new Error("La IA no devolvió un formato válido.");
                         
+                        const plan = JSON.parse(jsonMatch[0]);
                         FamilyApp.components.renderPlanResults(plan);
 
                     } catch (e) {
-                        console.error("Error OpenAI:", e);
-                        alert("Error de ChatGPT: " + e.message);
+                        console.error("Error:", e);
+                        alert("Error: " + e.message + "\n\nIMPORTANTE: Asegúrate de que la clave la has creado en Google AI Studio (aistudio.google.com) y no en Google Cloud.");
                     } finally {
                         btn.innerHTML = '✨ Generar Menú Inteligente';
                         btn.disabled = false;
@@ -364,6 +356,7 @@
     </script>
 </body>
 </html>
+
 
 
 

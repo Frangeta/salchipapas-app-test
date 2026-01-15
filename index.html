@@ -169,38 +169,62 @@
                     btn.innerHTML = '<span class="animate-spin material-symbols-outlined">refresh</span> Analizando...';
                     btn.disabled = true;
 
+                    // 1. Recopilar historial
                     const history = [];
                     const today = new Date();
                     for(let i=15; i>=0; i--) {
                         const d = new Date(); d.setDate(today.getDate() - i);
                         const ds = d.toISOString().split('T')[0];
-                        if(FamilyApp.state.menu[ds]) history.push(`${ds}: C:${FamilyApp.state.menu[ds].c}, D:${FamilyApp.state.menu[ds].d}`);
+                        const entry = FamilyApp.state.menu[ds];
+                        if(entry && (entry.c || entry.d)) {
+                            history.push(`${ds}: Comida:${entry.c || '?'}, Cena:${entry.d || '?'}`);
+                        }
                     }
 
-                    const promptText = `Nutricionista experto. Historial: ${JSON.stringify(history)}. Genera menú saludable próximos 7 días empezando mañana. Devuelve SOLO un array JSON así: [{"date":"YYYY-MM-DD","c":"Comida","d":"Cena"}]`;
+                    // 2. Preparar el envío (Formato exacto requerido por Google v1beta)
+                    const promptText = `Eres un nutricionista. Basándote en este historial de comidas: ${JSON.stringify(history)}, 
+                    genera un menú saludable para los próximos 7 días (desde mañana). 
+                    Responde EXCLUSIVAMENTE con un array JSON, sin texto antes ni después, con este formato:
+                    [{"date":"YYYY-MM-DD","c":"plato comida","d":"plato cena"}]`;
 
                     try {
-                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`, {
+                        // URL con formato v1 (más estable para modelos flash)
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${FamilyApp.geminiKey}`, {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: promptText }] }]
+                            })
                         });
 
                         const data = await response.json();
-                        const text = data.candidates[0].content.parts[0].text;
-                        const jsonMatch = text.match(/\[[\s\S]*\]/);
-                        if(!jsonMatch) throw new Error("Formato inválido");
+
+                        // Diagnóstico por si vuelve a fallar
+                        if (data.error) {
+                            throw new Error(`Error de Google: ${data.error.message}`);
+                        }
+
+                        if (!data.candidates || !data.candidates[0]) {
+                            throw new Error("La IA no devolvió resultados. Revisa tu cuota de uso.");
+                        }
+
+                        let text = data.candidates[0].content.parts[0].text;
                         
-                        FamilyApp.components.renderPlanResults(JSON.parse(jsonMatch[0]));
+                        // Limpiar posibles etiquetas de markdown
+                        const jsonMatch = text.match(/\[[\s\S]*\]/);
+                        if(!jsonMatch) throw new Error("La respuesta no contiene un JSON válido");
+                        
+                        const plan = JSON.parse(jsonMatch[0]);
+                        FamilyApp.components.renderPlanResults(plan);
+
                     } catch (e) {
-                        alert("Error de conexión. Verifica la Key de Gemini.");
-                        console.error(e);
+                        console.error("Error completo:", e);
+                        alert("Fallo en la conexión: " + e.message);
                     } finally {
                         btn.innerHTML = '✨ Generar Menú Inteligente';
                         btn.disabled = false;
                     }
                 },
-
                 accept(date, type, val, id) {
                     if(!FamilyApp.state.menu[date]) FamilyApp.state.menu[date] = {c:'', d:''};
                     FamilyApp.state.menu[date][type] = val;
@@ -337,3 +361,4 @@
     </script>
 </body>
 </html>
+

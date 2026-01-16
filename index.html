@@ -104,9 +104,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        const cloudRef = ref(db, 'family_v8');
-        const pinRef = ref(db, 'family_v8/config/accessPin');
-        const aiKeyRef = ref(db, 'family_v8/config/aiApiKey');
+        const cloudRef = ref(db, 'family_v9');
+        const pinRef = ref(db, 'family_v9/config/accessPin');
+        const aiKeyRef = ref(db, 'family_v9/config/aiApiKey');
 
         window.FamilyApp = {
             state: { menu: {}, shopping: [], dictionary: {}, recipes: {}, library: [] },
@@ -402,3 +402,4 @@
     </script>
 </body>
 </html>
+

@@ -6,4 +6,9 @@ family management app
   * Add optión semanal menu
   * Shopping List
     * categorization by section
-    
+   
+* V2.0
+  * IA menu semanal
+  * IA recipes
+  * Book of recipes
+  

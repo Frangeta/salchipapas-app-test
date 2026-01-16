@@ -1,15 +1,106 @@
-<script type="module">
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Salchipapas PRO - Stable Version</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { "primary": "#398fac", "success": "#4CC46D", "background-light": "#f8f7f7" },
+                    fontFamily: { "sans": ["Plus Jakarta Sans", "sans-serif"] }
+                },
+            },
+        }
+    </script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-item.active { color: #398fac; }
+        .nav-item.active span { font-variation-settings: 'FILL' 1; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .day-cell { min-height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 1rem; font-size: 0.75rem; transition: all 0.2s; border: 1px solid #f1f5f9; position: relative; }
+        .dot-menu { width: 5px; height: 5px; background: #4CC46D; border-radius: 50%; position: absolute; bottom: 6px; }
+        #lock-screen { position: fixed; inset: 0; background: #f8f7f7; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+        #app-content { display: none; }
+    </style>
+</head>
+<body class="bg-background-light text-[#101618] pb-28 min-h-screen font-sans">
+
+    <div id="lock-screen">
+        <div class="mb-8 text-center">
+            <div class="size-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer" onclick="location.reload()">
+                <span class="material-symbols-outlined text-primary text-4xl">lock</span>
+            </div>
+            <h2 class="text-xl font-bold">Salchipapas PRO</h2>
+            <p class="text-sm text-gray-400" id="lockMsg">Cargando...</p>
+        </div>
+        <input type="password" id="pinInput" inputmode="numeric" placeholder="••••" class="w-32 text-center text-2xl tracking-[1em] rounded-2xl border-none shadow-sm p-4 mb-4 focus:ring-2 focus:ring-primary" disabled>
+        <button id="btnLock" onclick="FamilyApp.security.checkPin()" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg opacity-50" disabled>Entrar</button>
+    </div>
+
+    <div id="app-content">
+        <header class="sticky top-0 z-30 bg-background-light/80 backdrop-blur-md border-b border-gray-100">
+            <div class="flex items-center p-4 justify-between max-w-md mx-auto">
+                <div class="flex size-10 items-center justify-center rounded-full border-2 border-primary/20 bg-white text-2xl">🌭</div>
+                <h1 class="text-lg font-bold tracking-tight text-primary">Salchipapas PRO</h1>
+                <button onclick="FamilyApp.security.logout()" class="material-symbols-outlined text-gray-300">logout</button>
+            </div>
+        </header>
+
+        <main class="max-w-md mx-auto p-4 space-y-6">
+            <section id="menu" class="tab-content active"></section>
+            <section id="planner" class="tab-content"></section>
+            <section id="biblioteca" class="tab-content"></section>
+            <section id="compra" class="tab-content"></section>
+        </main>
+
+        <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-100 px-4 py-4 flex justify-around items-center z-50 rounded-t-[2.5rem] shadow-xl">
+            <button onclick="FamilyApp.ui.switchTab('menu')" class="nav-item active flex flex-col items-center gap-1 text-gray-400" data-tab="menu">
+                <span class="material-symbols-outlined text-[24px]">restaurant</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest">Menú</span>
+            </button>
+            <button onclick="FamilyApp.ui.switchTab('planner')" class="nav-item flex flex-col items-center gap-1 text-gray-400" data-tab="planner">
+                <span class="material-symbols-outlined text-[24px]">auto_awesome</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest">IA</span>
+            </button>
+            <button onclick="FamilyApp.ui.switchTab('biblioteca')" class="nav-item flex flex-col items-center gap-1 text-gray-400" data-tab="biblioteca">
+                <span class="material-symbols-outlined text-[24px]">menu_book</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest">Libro</span>
+            </button>
+            <button onclick="FamilyApp.ui.switchTab('compra')" class="nav-item flex flex-col items-center gap-1 text-gray-400" data-tab="compra">
+                <span class="material-symbols-outlined text-[24px]">shopping_cart</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest">Compra</span>
+            </button>
+        </nav>
+    </div>
+
+    <div id="modalOverlay" class="fixed inset-0 bg-[#101618]/40 backdrop-blur-sm z-[60] hidden flex items-end sm:items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div id="modalContent"></div>
+            <button onclick="FamilyApp.ui.closeModal()" class="w-full mt-6 text-gray-400 text-[10px] font-bold uppercase tracking-widest py-2 text-center">Cerrar</button>
+        </div>
+    </div>
+
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // CONFIGURACIÓN: Asegúrate de que esta URL es la correcta de tu proyecto
+        // --- CONFIGURACIÓN FIREBASE ---
         const firebaseConfig = { databaseURL: "https://familyhub-f33f9-default-rtdb.europe-west1.firebasedatabase.app/" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        const cloudRef = ref(db, 'family_v9');
-        const pinRef = ref(db, 'family_v9/config/accessPin');
-        const aiKeyRef = ref(db, 'family_v9/config/aiApiKey');
+        const cloudRef = ref(db, 'family_v8');
+        const pinRef = ref(db, 'family_v8/config/accessPin');
+        const aiKeyRef = ref(db, 'family_v8/config/aiApiKey');
 
         window.FamilyApp = {
             state: { menu: {}, shopping: [], dictionary: {}, library: [] },
@@ -24,10 +115,17 @@
                     if (snapPin.exists()) this.remotePin = snapPin.val();
                     if (snapKey.exists()) this.aiKey = snapKey.val();
 
-                    document.getElementById('lockMsg').innerText = this.remotePin ? "PIN requerido" : "Crea un PIN";
-                    document.getElementById('pinInput').disabled = false;
-                    document.getElementById('btnLock').disabled = false;
-                    document.getElementById('btnLock').classList.remove('opacity-50');
+                    // CORRECCIÓN: Chequeo de seguridad para evitar error de null
+                    const elMsg = document.getElementById('lockMsg');
+                    const elPin = document.getElementById('pinInput');
+                    const elBtn = document.getElementById('btnLock');
+
+                    if (elMsg) elMsg.innerText = this.remotePin ? "PIN requerido" : "Crea un PIN";
+                    if (elPin) elPin.disabled = false;
+                    if (elBtn) {
+                        elBtn.disabled = false;
+                        elBtn.classList.remove('opacity-50');
+                    }
 
                     if(sessionStorage.getItem('unlocked') === 'true') this.security.unlock();
 
@@ -41,7 +139,7 @@
                         }
                         this.render();
                     });
-                } catch (e) { console.error(e); }
+                } catch (e) { console.error("Error init:", e); }
             },
 
             security: {
@@ -52,8 +150,10 @@
                     else { alert("PIN Incorrecto"); }
                 },
                 unlock() {
-                    document.getElementById('lock-screen').style.display = 'none';
-                    document.getElementById('app-content').style.display = 'block';
+                    const lock = document.getElementById('lock-screen');
+                    const content = document.getElementById('app-content');
+                    if(lock) lock.style.display = 'none';
+                    if(content) content.style.display = 'block';
                     FamilyApp.render();
                 },
                 logout() { sessionStorage.removeItem('unlocked'); location.reload(); }
@@ -63,7 +163,8 @@
                 async generateMenu() {
                     if(!FamilyApp.aiKey) return alert("Falta API Key");
                     const btn = document.getElementById('btnAiGen');
-                    btn.disabled = true; btn.innerText = "Pensando menú...";
+                    if(btn) { btn.disabled = true; btn.innerText = "Pensando menú..."; }
+                    
                     let start = new Date();
                     start.setDate(start.getDate() + (1 + 7 - start.getDay()) % 7);
                     const prompt = `Crea un menú de 7 días desde ${start.toISOString().split('T')[0]}. Responde SOLO un array JSON: [{"date":"YYYY-MM-DD","c":"Comida","d":"Cena"}].`;
@@ -76,12 +177,13 @@
                         const data = await response.json();
                         const plan = JSON.parse(data.choices[0].message.content.match(/\[.*\]/s)[0]);
                         this.renderAiResults(plan);
-                    } catch (e) { alert("Error IA"); }
-                    finally { btn.disabled = false; btn.innerText = "✨ Generar Menú Semanal"; }
+                    } catch (e) { alert("Error IA: " + e.message); }
+                    finally { if(btn) { btn.disabled = false; btn.innerText = "✨ Generar Menú Semanal"; } }
                 },
 
                 renderAiResults(plan) {
                     const res = document.getElementById('plannerResults');
+                    if(!res) return;
                     res.innerHTML = plan.map(d => `
                         <div class="bg-white p-4 rounded-3xl border mb-4 shadow-sm">
                             <p class="text-[10px] font-bold text-primary mb-3 uppercase tracking-widest">${d.date}</p>
@@ -135,7 +237,8 @@
 
             actions: {
                 addItem(inputId, manualValue = null, btn = null) {
-                    const val = manualValue || document.getElementById(inputId).value.trim();
+                    const el = document.getElementById(inputId);
+                    const val = manualValue || (el ? el.value.trim() : '');
                     if(!val) return;
                     let category = '📦 Otros';
                     const lower = val.toLowerCase();
@@ -143,25 +246,21 @@
                         if (words.some(w => lower.includes(w))) { category = cat; break; }
                     }
                     if(!FamilyApp.state.shopping) FamilyApp.state.shopping = [];
-                    // CORRECCION: Convertir ID a String siempre para evitar errores de tipo
+                    // FIXED: ID string
                     FamilyApp.state.shopping.push({ id: Date.now().toString(), name: val, checked: false, category });
                     if(manualValue && btn) { btn.innerText = 'done'; btn.classList.add('bg-success', 'text-white'); }
-                    if(!manualValue) document.getElementById(inputId).value = '';
+                    if(!manualValue && el) el.value = '';
                     FamilyApp.save();
                 },
-                // NUEVA FUNCIÓN: Marcar como hecho/pendiente
                 toggleShop(id) {
-                    // Usamos '==' para que funcione si id es string o numero
+                    // FIXED: == para evitar error de tipos
                     const item = FamilyApp.state.shopping.find(i => i.id == id);
                     if(item) { item.checked = !item.checked; FamilyApp.save(); }
                 },
-                // NUEVA FUNCIÓN: Categorizar y aprender
                 learnCategory(itemId, newCat) {
                     const item = FamilyApp.state.shopping.find(i => i.id == itemId);
                     if(!item) return;
                     item.category = newCat;
-                    
-                    // Aprender en diccionario
                     if(!FamilyApp.state.dictionary[newCat]) FamilyApp.state.dictionary[newCat] = [];
                     const word = item.name.toLowerCase();
                     if(!FamilyApp.state.dictionary[newCat].includes(word)) {
@@ -170,7 +269,6 @@
                     FamilyApp.save();
                     FamilyApp.ui.closeModal();
                 },
-                // NUEVA FUNCIÓN: Borrar completados
                 clearDone() {
                     if(confirm("¿Borrar productos comprados?")) {
                         FamilyApp.state.shopping = FamilyApp.state.shopping.filter(i => !i.checked);
@@ -189,15 +287,13 @@
                         FamilyApp.state.library.push({ id: Date.now().toString(), name, section: '📖 Sin Sección', ...recipe });
                     }
                     FamilyApp.save();
-                    alert("Receta guardada.");
+                    alert("Receta gestionada en el libro.");
                     FamilyApp.ui.closeModal();
                     delete window._currentAiRecipe;
                 },
                 saveRecipeManual() {
-                    // CORRECCION: Manejo robusto de IDs
-                    const rawId = document.getElementById('libId').value;
-                    const id = rawId ? rawId.toString() : Date.now().toString();
-                    
+                    const idEl = document.getElementById('libId');
+                    const id = (idEl && idEl.value) ? idEl.value : Date.now().toString();
                     const name = document.getElementById('libName').value;
                     const recipe = { 
                         id, 
@@ -205,21 +301,26 @@
                         section: document.getElementById('libSec').value, 
                         ing: document.getElementById('libIng').value, 
                         steps: document.getElementById('libSteps').value, 
-                        tip: document.getElementById('libTip').value 
+                        tip: '' 
                     };
                     
-                    // Usamos '==' para encontrar aunque haya mezcla de tipos
                     const idx = FamilyApp.state.library.findIndex(r => r.id == id);
                     if(idx > -1) {
                         FamilyApp.state.library[idx] = recipe;
                     } else {
                         const dup = FamilyApp.state.library.find(x => x.name.toLowerCase() === name.toLowerCase());
-                        if(dup) { alert("Ya existe ese nombre."); return; }
+                        if(dup) { alert("Ya existe ese nombre en el libro."); return; }
                         FamilyApp.state.library.push(recipe);
                     }
                     FamilyApp.save(); FamilyApp.ui.closeModal();
                 },
-                deleteRecipe(id) { if(confirm("¿Borrar?")) { FamilyApp.state.library = FamilyApp.state.library.filter(r => r.id != id); FamilyApp.save(); FamilyApp.ui.closeModal(); } }
+                deleteRecipe(id) { 
+                    if(confirm("¿Borrar?")) { 
+                        FamilyApp.state.library = FamilyApp.state.library.filter(r => r.id != id); 
+                        FamilyApp.save(); 
+                        FamilyApp.ui.closeModal(); 
+                    } 
+                }
             },
 
             components: {
@@ -227,6 +328,9 @@
                     let curr = new Date();
                     let first = curr.getDate() - (curr.getDay() === 0 ? 6 : curr.getDay() - 1);
                     let weekHtml = '';
+                    const container = document.getElementById('menu');
+                    if(!container) return;
+
                     for(let i=0; i<7; i++){
                         let d = new Date(new Date().setDate(first + i));
                         let ds = d.toISOString().split('T')[0];
@@ -240,10 +344,13 @@
                             <button onclick="FamilyApp.ui.openMenuModal('${ds}')" class="text-gray-300 material-symbols-outlined">edit_square</button>
                         </div>`;
                     }
-                    document.getElementById('menu').innerHTML = `<h2 class="text-2xl font-bold mb-6">Menú Semanal</h2>${weekHtml}<div class="bg-white rounded-[2.5rem] p-6 mt-8 border"><div class="calendar-grid" id="gridMenu"></div></div>`;
+                    container.innerHTML = `<h2 class="text-2xl font-bold mb-6">Menú Semanal</h2>${weekHtml}<div class="bg-white rounded-[2.5rem] p-6 mt-8 border"><div class="calendar-grid" id="gridMenu"></div></div>`;
                     FamilyApp.ui.drawCalendar('gridMenu');
                 },
                 compra() {
+                    const container = document.getElementById('compra');
+                    if(!container) return;
+
                     const items = FamilyApp.state.shopping || [];
                     const pending = items.filter(i => !i.checked);
                     const done = items.filter(i => i.checked);
@@ -259,9 +366,12 @@
                         html += `</div></div>`;
                     });
                     if(done.length > 0) { html += `<div class="mt-10 pt-6 border-t opacity-50"><button onclick="FamilyApp.actions.clearDone()" class="text-[10px] text-red-400 font-bold mb-4">LIMPIAR COMPRADOS</button>${done.map(i => `<div onclick="FamilyApp.actions.toggleShop('${i.id}')" class="flex items-center gap-3 p-2 text-sm line-through text-gray-400"><span class="material-symbols-outlined text-success">check_circle</span>${i.name}</div>`).join('')}</div>`; }
-                    document.getElementById('compra').innerHTML = html;
+                    container.innerHTML = html;
                 },
                 biblioteca() {
+                    const container = document.getElementById('biblioteca');
+                    if(!container) return;
+                    
                     const query = (document.getElementById('libSearch')?.value || '').toLowerCase();
                     const recipes = (FamilyApp.state.library || []).filter(r => r.name.toLowerCase().includes(query));
                     const grouped = {};
@@ -270,11 +380,10 @@
                     <div class="mb-6 relative"><input type="text" id="libSearch" value="${query}" oninput="FamilyApp.render()" placeholder="Buscar..." class="w-full rounded-2xl border-none p-4 pl-12 text-sm bg-white shadow-sm"><span class="material-symbols-outlined absolute left-4 top-4 text-gray-300">search</span></div>`;
                     Object.keys(grouped).sort().forEach(sec => {
                         html += `<div class="mb-4"><h3 class="text-[10px] font-bold uppercase text-primary mb-2 ml-2">${sec}</h3><div class="space-y-2">`;
-                        // CORRECCION: Asegurarse de que el ID se pasa como string entre comillas
                         html += grouped[sec].map(r => `<div onclick="FamilyApp.ui.openRecipeModal('${r.id}')" class="bg-white p-4 rounded-3xl border shadow-sm flex justify-between items-center cursor-pointer"><div><p class="font-bold text-sm">${r.name}</p></div><span class="material-symbols-outlined text-gray-200">chevron_right</span></div>`).join('');
                         html += `</div></div>`;
                     });
-                    document.getElementById('biblioteca').innerHTML = html;
+                    container.innerHTML = html;
                 }
             },
 
@@ -282,16 +391,21 @@
                 switchTab(id) {
                     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
                     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active', 'text-primary'));
-                    document.getElementById(id).classList.add('active');
-                    document.querySelector(`[data-tab="${id}"]`).classList.add('active', 'text-primary');
-                    if(id === 'planner') document.getElementById('planner').innerHTML = `<h2 class="text-2xl font-bold mb-6">IA Planner</h2><button id="btnAiGen" onclick="FamilyApp.ai.generateMenu()" class="bg-primary text-white w-full py-4 rounded-3xl font-bold shadow-lg">✨ Generar Menú Semanal</button><div id="plannerResults" class="mt-8 pb-20"></div>`;
+                    const target = document.getElementById(id);
+                    const btn = document.querySelector(`[data-tab="${id}"]`);
+                    
+                    if(target) target.classList.add('active');
+                    if(btn) btn.classList.add('active', 'text-primary');
+                    
+                    if(id === 'planner') {
+                        const p = document.getElementById('planner');
+                        if(p) p.innerHTML = `<h2 class="text-2xl font-bold mb-6">IA Planner</h2><button id="btnAiGen" onclick="FamilyApp.ai.generateMenu()" class="bg-primary text-white w-full py-4 rounded-3xl font-bold shadow-lg">✨ Generar Menú Semanal</button><div id="plannerResults" class="mt-8 pb-20"></div>`;
+                    }
                     FamilyApp.render();
                 },
                 openRecipeModal(id = null) {
-                    // CORRECCION: Comparación laxa (==) para encontrar receta por si el ID es numérico
                     const r = id ? FamilyApp.state.library.find(x => x.id == id) : {name:'', section:'📖 Sin Sección', ing:'', steps:'', tip:''};
-                    // Protección extra por si no encuentra la receta
-                    if (id && !r) return alert("Error cargando receta. Intenta borrarla y crearla de nuevo.");
+                    if (id && !r) return alert("Error de carga. Receta no encontrada.");
                     
                     FamilyApp.ui.openModal(`
                         <div class="flex justify-between items-center mb-6"><h3 class="font-bold text-primary text-[10px] uppercase">${id ? 'Editar' : 'Nueva'}</h3><div class="flex gap-4">
@@ -299,7 +413,7 @@
                         ${id ? `<button onclick="FamilyApp.actions.deleteRecipe('${id}')" class="material-symbols-outlined text-red-400">delete</button>` : ''}</div></div>
                         <input type="hidden" id="libId" value="${id || ''}">
                         <div class="space-y-4">
-                            <input type="text" id="libName" value="${r.name}" placeholder="Nombre" class="w-full rounded-2xl border-none bg-gray-50 p-4 font-bold text-sm">
+                            <input type="text" id="libName" value="${r.name || ''}" placeholder="Nombre" class="w-full rounded-2xl border-none bg-gray-50 p-4 font-bold text-sm">
                             <select id="libSec" class="w-full rounded-2xl border-none bg-gray-50 p-4 text-xs">
                                 <option ${r.section==='📖 Sin Sección'?'selected':''}>📖 Sin Sección</option>
                                 <option ${r.section==='🥗 Entrantes'?'selected':''}>🥗 Entrantes</option>
@@ -323,7 +437,6 @@
                     const drawRecipeLink = (name) => {
                         if(!name) return '';
                         const r = getR(name);
-                        // CORRECCION: Asegurarse que el ID está entre comillas para no romper el HTML
                         if(r) return `<div class="mt-2 p-3 bg-amber-50 rounded-xl text-[10px] border border-amber-100 cursor-pointer" onclick="FamilyApp.ui.openRecipeModal('${r.id}')"><p class="font-bold text-amber-800">📖 Ver Receta:</p><p>${(r.ing || '').substring(0,30)}...</p></div>`;
                         return `<button onclick="FamilyApp.ai.proposeRecipe('${name.replace(/'/g, "")}')" class="text-[10px] text-primary mt-2 font-bold uppercase">✨ Generar Receta IA</button>`;
                     };
@@ -356,9 +469,19 @@
                         c.onclick = () => FamilyApp.ui.openMenuModal(ds); g.appendChild(c);
                     }
                 },
-                openModal(h) { document.getElementById('modalContent').innerHTML = h; document.getElementById('modalOverlay').classList.remove('hidden'); },
-                closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
+                openModal(h) { 
+                    const content = document.getElementById('modalContent');
+                    const overlay = document.getElementById('modalOverlay');
+                    if(content) content.innerHTML = h; 
+                    if(overlay) overlay.classList.remove('hidden'); 
+                },
+                closeModal() { 
+                    const overlay = document.getElementById('modalOverlay');
+                    if(overlay) overlay.classList.add('hidden'); 
+                }
             }
         };
         window.addEventListener('load', () => FamilyApp.init());
     </script>
+</body>
+</html>

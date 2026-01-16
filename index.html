@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Salchipapas PRO - Versión Estable Final</title>
+    <title>Salchipapas PRO - Stable Version</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -21,14 +21,14 @@
     </script>
     <style>
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .nav-item.active { color: #398fac; }
         .nav-item.active span { font-variation-settings: 'FILL' 1; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-        .day-cell { min-height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 1rem; font-size: 0.75rem; border: 1px solid #f1f5f9; position: relative; background: white; }
+        .day-cell { min-height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 1rem; font-size: 0.75rem; transition: all 0.2s; border: 1px solid #f1f5f9; position: relative; }
         .dot-menu { width: 5px; height: 5px; background: #4CC46D; border-radius: 50%; position: absolute; bottom: 6px; }
-        #lock-screen { position: fixed; inset: 0; background: #f8f7f7; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #lock-screen { position: fixed; inset: 0; background: #f8f7f7; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
         #app-content { display: none; }
     </style>
 </head>
@@ -36,7 +36,7 @@
 
     <div id="lock-screen">
         <div class="mb-8 text-center">
-            <div class="size-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div class="size-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer" onclick="location.reload()">
                 <span class="material-symbols-outlined text-primary text-4xl">lock</span>
             </div>
             <h2 class="text-xl font-bold">Salchipapas PRO</h2>
@@ -63,21 +63,21 @@
         </main>
 
         <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-100 px-4 py-4 flex justify-around items-center z-50 rounded-t-[2.5rem] shadow-xl">
-            <button onclick="FamilyApp.ui.switchTab('menu')" class="nav-item active flex flex-col items-center gap-1" data-tab="menu">
+            <button onclick="FamilyApp.ui.switchTab('menu')" class="nav-item active flex flex-col items-center gap-1 text-gray-400" data-tab="menu">
                 <span class="material-symbols-outlined text-[24px]">restaurant</span>
-                <span class="text-[9px] font-bold uppercase">Menú</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest">Menú</span>
             </button>
-            <button onclick="FamilyApp.ui.switchTab('planner')" class="nav-item flex flex-col items-center gap-1" data-tab="planner">
+            <button onclick="FamilyApp.ui.switchTab('planner')" class="nav-item flex flex-col items-center gap-1 text-gray-400" data-tab="planner">
                 <span class="material-symbols-outlined text-[24px]">auto_awesome</span>
-                <span class="text-[9px] font-bold uppercase">IA</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest">IA</span>
             </button>
-            <button onclick="FamilyApp.ui.switchTab('biblioteca')" class="nav-item flex flex-col items-center gap-1" data-tab="biblioteca">
+            <button onclick="FamilyApp.ui.switchTab('biblioteca')" class="nav-item flex flex-col items-center gap-1 text-gray-400" data-tab="biblioteca">
                 <span class="material-symbols-outlined text-[24px]">menu_book</span>
-                <span class="text-[9px] font-bold uppercase">Libro</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest">Libro</span>
             </button>
-            <button onclick="FamilyApp.ui.switchTab('compra')" class="nav-item flex flex-col items-center gap-1" data-tab="compra">
+            <button onclick="FamilyApp.ui.switchTab('compra')" class="nav-item flex flex-col items-center gap-1 text-gray-400" data-tab="compra">
                 <span class="material-symbols-outlined text-[24px]">shopping_cart</span>
-                <span class="text-[9px] font-bold uppercase">Compra</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest">Compra</span>
             </button>
         </nav>
     </div>
@@ -85,7 +85,7 @@
     <div id="modalOverlay" class="fixed inset-0 bg-[#101618]/40 backdrop-blur-sm z-[60] hidden flex items-end sm:items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
             <div id="modalContent"></div>
-            <button onclick="FamilyApp.ui.closeModal()" class="w-full mt-6 text-gray-400 text-[10px] font-bold uppercase py-2">Cerrar</button>
+            <button onclick="FamilyApp.ui.closeModal()" class="w-full mt-6 text-gray-400 text-[10px] font-bold uppercase tracking-widest py-2 text-center">Cerrar</button>
         </div>
     </div>
 
@@ -96,44 +96,50 @@
         const firebaseConfig = { databaseURL: "https://familyhub-f33f9-default-rtdb.europe-west1.firebasedatabase.app/" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        
         const cloudRef = ref(db, 'family_v9');
+        const pinRef = ref(db, 'family_v9/config/accessPin');
+        const aiKeyRef = ref(db, 'family_v9/config/aiApiKey');
 
         window.FamilyApp = {
             state: { menu: {}, shopping: [], dictionary: {}, library: [] },
-            aiKey: null,
+            currentMonth: new Date(),
             remotePin: null,
+            aiKey: null,
 
             async init() {
-                const snap = await get(cloudRef);
-                const data = snap.val();
-                if(data?.config?.accessPin) this.remotePin = data.config.accessPin;
-                if(data?.config?.aiApiKey) this.aiKey = data.config.aiApiKey;
+                try {
+                    const snapPin = await get(pinRef);
+                    const snapKey = await get(aiKeyRef);
+                    if (snapPin.exists()) this.remotePin = snapPin.val();
+                    if (snapKey.exists()) this.aiKey = snapKey.val();
 
-                document.getElementById('lockMsg').innerText = this.remotePin ? "PIN requerido" : "Crea un PIN";
-                document.getElementById('pinInput').disabled = false;
-                document.getElementById('btnLock').disabled = false;
-                document.getElementById('btnLock').classList.remove('opacity-50');
+                    document.getElementById('lockMsg').innerText = this.remotePin ? "PIN requerido" : "Crea un PIN";
+                    document.getElementById('pinInput').disabled = false;
+                    document.getElementById('btnLock').disabled = false;
+                    document.getElementById('btnLock').classList.remove('opacity-50');
 
-                if(sessionStorage.getItem('unlocked') === 'true') this.security.unlock();
+                    if(sessionStorage.getItem('unlocked') === 'true') this.security.unlock();
 
-                onValue(cloudRef, (snapshot) => {
-                    const val = snapshot.val();
-                    if (val) {
-                        this.state.menu = val.menu || {};
-                        this.state.shopping = val.shopping || [];
-                        this.state.library = val.library || [];
-                        this.state.dictionary = val.dictionary || {};
-                    }
-                    this.render();
-                });
+                    onValue(cloudRef, (snapshot) => {
+                        const data = snapshot.val();
+                        if (data) {
+                            this.state = { ...this.state, ...data };
+                            if (!this.state.library) this.state.library = [];
+                            if (!this.state.dictionary) this.state.dictionary = {};
+                            if (!this.state.shopping) this.state.shopping = [];
+                        }
+                        this.render();
+                    });
+                } catch (e) { console.error(e); }
             },
 
             security: {
                 checkPin() {
                     const val = document.getElementById('pinInput').value;
-                    if(!FamilyApp.remotePin) { set(ref(db, 'family_v9/config/accessPin'), val); FamilyApp.remotePin = val; }
+                    if(!FamilyApp.remotePin && val) { set(pinRef, val); FamilyApp.remotePin = val; }
                     if(val === FamilyApp.remotePin) { sessionStorage.setItem('unlocked', 'true'); this.unlock(); }
-                    else alert("PIN Incorrecto");
+                    else { alert("PIN Incorrecto"); }
                 },
                 unlock() {
                     document.getElementById('lock-screen').style.display = 'none';
@@ -143,149 +149,150 @@
                 logout() { sessionStorage.removeItem('unlocked'); location.reload(); }
             },
 
-            save() { set(cloudRef, this.state); },
-
-            actions: {
-                // COMPRA
-                addItem(inputId, manualValue = null) {
-                    const name = manualValue || document.getElementById(inputId).value.trim();
-                    if(!name) return;
-                    let category = '📦 Otros';
-                    for (const [cat, words] of Object.entries(FamilyApp.state.dictionary)) {
-                        if (words.some(w => name.toLowerCase().includes(w))) { category = cat; break; }
-                    }
-                    FamilyApp.state.shopping.push({ id: Date.now(), name, checked: false, category });
-                    if(!manualValue) document.getElementById(inputId).value = '';
-                    FamilyApp.save();
-                },
-                toggleShop(id) {
-                    const item = FamilyApp.state.shopping.find(i => i.id === id);
-                    if(item) item.checked = !item.checked;
-                    FamilyApp.save();
-                },
-                clearDone() {
-                    FamilyApp.state.shopping = FamilyApp.state.shopping.filter(i => !i.checked);
-                    FamilyApp.save();
-                },
-                learnCategory(itemId, cat) {
-                    const item = FamilyApp.state.shopping.find(i => i.id === itemId);
-                    if(item) {
-                        item.category = cat;
-                        if(!FamilyApp.state.dictionary[cat]) FamilyApp.state.dictionary[cat] = [];
-                        if(!FamilyApp.state.dictionary[cat].includes(item.name.toLowerCase())) {
-                            FamilyApp.state.dictionary[cat].push(item.name.toLowerCase());
-                        }
-                        FamilyApp.save();
-                        FamilyApp.ui.closeModal();
-                    }
-                },
-                // RECETAS
-                saveRecipeManual() {
-                    const id = document.getElementById('libId').value;
-                    const name = document.getElementById('libName').value.trim();
-                    if(!name) return alert("Nombre obligatorio");
-
-                    const recipeData = {
-                        id: id || Date.now().toString(),
-                        name,
-                        section: document.getElementById('libSec').value,
-                        ing: document.getElementById('libIng').value,
-                        steps: document.getElementById('libSteps').value
-                    };
-
-                    const existingIdx = FamilyApp.state.library.findIndex(r => r.id === id || r.name.toLowerCase() === name.toLowerCase());
-                    
-                    if(existingIdx > -1) {
-                        FamilyApp.state.library[existingIdx] = recipeData;
-                    } else {
-                        FamilyApp.state.library.push(recipeData);
-                    }
-                    
-                    FamilyApp.save();
-                    FamilyApp.ui.closeModal();
-                },
-                deleteRecipe(id) {
-                    if(confirm("¿Borrar receta?")) {
-                        FamilyApp.state.library = FamilyApp.state.library.filter(r => r.id !== id);
-                        FamilyApp.save();
-                        FamilyApp.ui.closeModal();
-                    }
-                }
-            },
-
             ai: {
-                async proposeRecipe(dishName) {
+                async generateMenu() {
                     if(!FamilyApp.aiKey) return alert("Falta API Key");
-                    FamilyApp.ui.openModal(`<div class="p-10 text-center animate-pulse text-sm">IA cocinando receta para ${dishName}...</div>`);
+                    const btn = document.getElementById('btnAiGen');
+                    btn.disabled = true; btn.innerText = "Pensando menú...";
+                    let start = new Date();
+                    start.setDate(start.getDate() + (1 + 7 - start.getDay()) % 7);
+                    const prompt = `Crea un menú de 7 días desde ${start.toISOString().split('T')[0]}. Responde SOLO un array JSON: [{"date":"YYYY-MM-DD","c":"Comida","d":"Cena"}].`;
                     try {
                         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${FamilyApp.aiKey}` },
-                            body: JSON.stringify({
-                                model: "llama-3.1-8b-instant",
-                                messages: [{ role: "user", content: `Receta para "${dishName}". Responde SOLO JSON: {"ing":"...","steps":"..."}` }]
-                            })
+                            body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: prompt }], temperature: 0.6 })
+                        });
+                        const data = await response.json();
+                        const plan = JSON.parse(data.choices[0].message.content.match(/\[.*\]/s)[0]);
+                        this.renderAiResults(plan);
+                    } catch (e) { alert("Error IA"); }
+                    finally { btn.disabled = false; btn.innerText = "✨ Generar Menú Semanal"; }
+                },
+
+                renderAiResults(plan) {
+                    const res = document.getElementById('plannerResults');
+                    res.innerHTML = plan.map(d => `
+                        <div class="bg-white p-4 rounded-3xl border mb-4 shadow-sm">
+                            <p class="text-[10px] font-bold text-primary mb-3 uppercase tracking-widest">${d.date}</p>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl text-xs"><span>☀️ ${d.c}</span><button onclick="FamilyApp.ai.accept('${d.date}','c','${d.c}', this)" class="bg-white size-8 rounded-xl border flex items-center justify-center">✓</button></div>
+                                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl text-xs"><span>🌙 ${d.d}</span><button onclick="FamilyApp.ai.accept('${d.date}','d','${d.d}', this)" class="bg-white size-8 rounded-xl border flex items-center justify-center">✓</button></div>
+                            </div>
+                        </div>`).join('');
+                },
+
+                accept(date, type, val, btn) {
+                    if(!FamilyApp.state.menu[date]) FamilyApp.state.menu[date] = {c:'', d:''};
+                    FamilyApp.state.menu[date][type] = val;
+                    FamilyApp.save();
+                    btn.innerHTML = '✓'; btn.classList.add('bg-success', 'text-white');
+                },
+
+                async proposeRecipe(dishName) {
+                    if(!dishName) return;
+                    FamilyApp.ui.openModal(`<div class="text-center py-10"><p class="text-sm text-gray-400 animate-pulse">Generando receta para ${dishName}...</p></div>`);
+                    const prompt = `Receta corta para "${dishName}". Responde SOLO JSON: {"ing": "...", "steps": "...", "tip": "..."}`;
+                    try {
+                        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${FamilyApp.aiKey}` },
+                            body: JSON.stringify({ model: "llama-3.1-8b-instant", messages: [{ role: "user", content: prompt }], temperature: 0.5 })
                         });
                         const data = await response.json();
                         const r = JSON.parse(data.choices[0].message.content.match(/\{.*\}/s)[0]);
-                        
-                        // Guardar temporalmente para el modal de confirmación
-                        window._tempAiRecipe = { name: dishName, ...r };
-
+                        window._currentAiRecipe = r; // Almacén temporal seguro
                         FamilyApp.ui.openModal(`
-                            <h3 class="font-bold text-primary mb-4 uppercase text-xs">Propuesta IA</h3>
-                            <div class="text-left space-y-3">
+                            <h3 class="font-bold text-primary text-sm mb-4 uppercase">Propuesta IA</h3>
+                            <div class="space-y-4 text-left">
                                 <p class="text-sm font-bold">${dishName}</p>
-                                <p class="text-xs text-gray-500"><b>Ingredientes:</b> ${r.ing}</p>
+                                <p class="text-xs text-gray-600"><b>Ing:</b> ${r.ing}</p>
+                                <p class="text-xs text-gray-600"><b>Pasos:</b> ${r.steps}</p>
                             </div>
-                            <button onclick="FamilyApp.ai.confirmAiRecipe()" class="w-full bg-success text-white py-4 rounded-2xl font-bold mt-6 text-xs uppercase">Guardar en el Libro</button>
+                            <button onclick="FamilyApp.actions.confirmSaveAiRecipe('${dishName.replace(/'/g, "\\'")}')" class="w-full bg-success text-white py-4 rounded-2xl font-bold uppercase text-[10px] mt-6">✓ Guardar (Evita Duplicados)</button>
                         `);
                     } catch (e) { alert("Error IA"); FamilyApp.ui.closeModal(); }
-                },
-                confirmAiRecipe() {
-                    const r = window._tempAiRecipe;
-                    const exists = FamilyApp.state.library.find(x => x.name.toLowerCase() === r.name.toLowerCase());
-                    if(exists) {
-                        Object.assign(exists, { ing: r.ing, steps: r.steps });
-                    } else {
-                        FamilyApp.state.library.push({ id: Date.now().toString(), name: r.name, section: '📖 Sin Sección', ing: r.ing, steps: r.steps });
-                    }
-                    FamilyApp.save();
-                    alert("¡Receta guardada!");
-                    FamilyApp.ui.closeModal();
                 }
             },
 
-            render() {
+            save() { set(cloudRef, this.state); },
+            render() { 
                 const active = document.querySelector('.tab-content.active')?.id;
                 if(active === 'menu') this.components.menu();
                 if(active === 'compra') this.components.compra();
                 if(active === 'biblioteca') this.components.biblioteca();
             },
 
+            actions: {
+                addItem(inputId, manualValue = null, btn = null) {
+                    const val = manualValue || document.getElementById(inputId).value.trim();
+                    if(!val) return;
+                    let category = '📦 Otros';
+                    const lower = val.toLowerCase();
+                    for (const [cat, words] of Object.entries(FamilyApp.state.dictionary)) {
+                        if (words.some(w => lower.includes(w))) { category = cat; break; }
+                    }
+                    if(!FamilyApp.state.shopping) FamilyApp.state.shopping = [];
+                    FamilyApp.state.shopping.push({ id: Date.now(), name: val, checked: false, category });
+                    if(manualValue && btn) { btn.innerText = 'done'; btn.classList.add('bg-success', 'text-white'); }
+                    if(!manualValue) document.getElementById(inputId).value = '';
+                    FamilyApp.save();
+                },
+                confirmSaveAiRecipe(name) {
+                    const recipe = window._currentAiRecipe;
+                    if(!recipe) return;
+                    // Lógica Anti-Duplicados
+                    const exists = FamilyApp.state.library.find(x => x.name.toLowerCase() === name.toLowerCase());
+                    if(exists) {
+                        if(confirm("Ya existe una receta con este nombre. ¿Deseas sobreescribirla?")) {
+                            Object.assign(exists, recipe);
+                        } else { FamilyApp.ui.closeModal(); return; }
+                    } else {
+                        FamilyApp.state.library.push({ id: Date.now().toString(), name, section: '📖 Sin Sección', ...recipe });
+                    }
+                    FamilyApp.save();
+                    alert("Receta gestionada en el libro.");
+                    FamilyApp.ui.closeModal();
+                    delete window._currentAiRecipe;
+                },
+                saveRecipeManual() {
+                    const id = document.getElementById('libId').value || Date.now().toString();
+                    const name = document.getElementById('libName').value;
+                    const recipe = { id, name, section: document.getElementById('libSec').value, ing: document.getElementById('libIng').value, steps: document.getElementById('libSteps').value, tip: document.getElementById('libTip').value };
+                    
+                    const idx = FamilyApp.state.library.findIndex(r => r.id === id);
+                    if(idx > -1) {
+                        FamilyApp.state.library[idx] = recipe;
+                    } else {
+                        // Anti duplicado en manual
+                        const dup = FamilyApp.state.library.find(x => x.name.toLowerCase() === name.toLowerCase());
+                        if(dup) { alert("Ya existe ese nombre en el libro."); return; }
+                        FamilyApp.state.library.push(recipe);
+                    }
+                    FamilyApp.save(); FamilyApp.ui.closeModal();
+                },
+                deleteRecipe(id) { if(confirm("¿Borrar?")) { FamilyApp.state.library = FamilyApp.state.library.filter(r => r.id !== id); FamilyApp.save(); FamilyApp.ui.closeModal(); } }
+            },
+
             components: {
                 menu() {
-                    let html = `<h2 class="text-2xl font-bold mb-6">Menú Semanal</h2>`;
                     let curr = new Date();
                     let first = curr.getDate() - (curr.getDay() === 0 ? 6 : curr.getDay() - 1);
+                    let weekHtml = '';
                     for(let i=0; i<7; i++){
                         let d = new Date(new Date().setDate(first + i));
                         let ds = d.toISOString().split('T')[0];
                         let m = FamilyApp.state.menu[ds] || {c:'', d:''};
-                        html += `<div class="bg-white p-4 rounded-3xl border mb-3 shadow-sm flex items-center gap-4">
-                            <div class="w-10 text-center text-primary">
-                                <p class="text-[9px] font-bold uppercase">${new Intl.DateTimeFormat('es',{weekday:'short'}).format(d)}</p>
-                                <p class="text-lg font-bold">${d.getDate()}</p>
+                        weekHtml += `<div class="bg-white p-4 rounded-3xl border border-gray-100 mb-3 shadow-sm flex items-center gap-4">
+                            <div class="w-10 text-center text-primary"><p class="text-[9px] font-bold uppercase">${new Intl.DateTimeFormat('es',{weekday:'short'}).format(d)}</p><p class="text-lg font-bold">${d.getDate()}</p></div>
+                            <div class="flex-grow text-xs border-l pl-4 space-y-1">
+                                <div class="truncate ${m.c ? 'text-gray-900 font-bold' : 'text-gray-300'}">☀️ ${m.c || '---'}</div>
+                                <div class="truncate ${m.d ? 'text-gray-900 font-bold' : 'text-gray-300'}">🌙 ${m.d || '---'}</div>
                             </div>
-                            <div class="flex-grow text-xs border-l pl-4 truncate">
-                                <div class="${m.c ? 'font-bold' : 'text-gray-300'}">☀️ ${m.c || '---'}</div>
-                                <div class="${m.d ? 'font-bold' : 'text-gray-300'}">🌙 ${m.d || '---'}</div>
-                            </div>
-                            <button onclick="FamilyApp.ui.openMenuModal('${ds}')" class="material-symbols-outlined text-gray-300">edit_square</button>
+                            <button onclick="FamilyApp.ui.openMenuModal('${ds}')" class="text-gray-300 material-symbols-outlined">edit_square</button>
                         </div>`;
                     }
-                    html += `<div class="bg-white rounded-[2.5rem] p-6 mt-8 border"><div class="calendar-grid" id="gridMenu"></div></div>`;
-                    document.getElementById('menu').innerHTML = html;
+                    document.getElementById('menu').innerHTML = `<h2 class="text-2xl font-bold mb-6">Menú Semanal</h2>${weekHtml}<div class="bg-white rounded-[2.5rem] p-6 mt-8 border"><div class="calendar-grid" id="gridMenu"></div></div>`;
                     FamilyApp.ui.drawCalendar('gridMenu');
                 },
                 compra() {
@@ -294,41 +301,29 @@
                     const done = items.filter(i => i.checked);
                     const grouped = {};
                     pending.forEach(i => { const cat = i.category || '📦 Otros'; if(!grouped[cat]) grouped[cat] = []; grouped[cat].push(i); });
-
-                    let html = `<h2 class="text-2xl font-bold mb-6">Compra</h2>
-                    <div class="flex gap-2 mb-8">
-                        <input type="text" id="shopIn" placeholder="Añadir algo..." class="flex-grow rounded-2xl border-none p-4 text-sm bg-white shadow-sm">
-                        <button onclick="FamilyApp.actions.addItem('shopIn')" class="bg-primary text-white w-14 rounded-2xl material-symbols-outlined">add</button>
-                    </div>`;
-
+                    let html = `<h2 class="text-2xl font-bold mb-6">Compra</h2><div class="flex gap-2 mb-8"><input type="text" id="shopMain" placeholder="Añadir..." class="flex-grow rounded-2xl border-none shadow-sm p-4 text-sm bg-white"><button onclick="FamilyApp.actions.addItem('shopMain')" class="bg-primary text-white rounded-2xl w-14 flex items-center justify-center material-symbols-outlined">add</button></div>`;
                     Object.keys(grouped).sort().forEach(cat => {
-                        html += `<div class="mb-6"><h3 class="text-[10px] font-black text-primary mb-2 ml-2 uppercase">${cat}</h3>`;
-                        html += grouped[cat].map(i => `<div class="bg-white p-3 rounded-2xl flex items-center justify-between border mb-2 shadow-sm">
-                            <div onclick="FamilyApp.actions.toggleShop(${i.id})" class="flex items-center gap-3 flex-grow cursor-pointer">
-                                <span class="material-symbols-outlined text-gray-200">circle</span>
-                                <span class="text-sm">${i.name}</span>
-                            </div>
-                            <button onclick="FamilyApp.ui.openCategoryModal(${i.id}, '${i.name.replace(/'/g, "")}')" class="text-gray-300 material-symbols-outlined">label</button>
+                        html += `<div class="mb-6"><h3 class="text-[10px] font-black uppercase text-primary mb-3 ml-2">${cat}</h3><div class="space-y-2">`;
+                        html += grouped[cat].map(i => `<div class="bg-white p-3 rounded-2xl flex items-center justify-between border shadow-sm">
+                            <div onclick="FamilyApp.actions.toggleShop(${i.id})" class="flex items-center gap-3 flex-grow"><span class="material-symbols-outlined text-gray-200">circle</span><span class="text-sm text-gray-700">${i.name}</span></div>
+                            <button onclick="FamilyApp.ui.openCategoryModal(${i.id}, '${i.name.replace(/'/g, "")}')" class="text-gray-300 material-symbols-outlined text-lg">label</button>
                         </div>`).join('');
-                        html += `</div>`;
+                        html += `</div></div>`;
                     });
-
-                    if(done.length > 0) {
-                        html += `<div class="mt-10 pt-6 border-t"><button onclick="FamilyApp.actions.clearDone()" class="text-[10px] font-bold text-red-400 mb-4 uppercase">Limpiar Comprados</button>
-                        ${done.map(i => `<div onclick="FamilyApp.actions.toggleShop(${i.id})" class="flex items-center gap-3 p-2 text-sm text-gray-400 line-through"><span class="material-symbols-outlined text-success">check_circle</span>${i.name}</div>`).join('')}</div>`;
-                    }
+                    if(done.length > 0) { html += `<div class="mt-10 pt-6 border-t opacity-50"><button onclick="FamilyApp.actions.clearDone()" class="text-[10px] text-red-400 font-bold mb-4">LIMPIAR COMPRADOS</button>${done.map(i => `<div onclick="FamilyApp.actions.toggleShop(${i.id})" class="flex items-center gap-3 p-2 text-sm line-through text-gray-400"><span class="material-symbols-outlined text-success">check_circle</span>${i.name}</div>`).join('')}</div>`; }
                     document.getElementById('compra').innerHTML = html;
                 },
                 biblioteca() {
-                    const recipes = FamilyApp.state.library || [];
+                    const query = (document.getElementById('libSearch')?.value || '').toLowerCase();
+                    const recipes = (FamilyApp.state.library || []).filter(r => r.name.toLowerCase().includes(query));
                     const grouped = {};
                     recipes.forEach(r => { const sec = r.section || '📖 Sin Sección'; if(!grouped[sec]) grouped[sec] = []; grouped[sec].push(r); });
-
-                    let html = `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Libro</h2><button onclick="FamilyApp.ui.openRecipeModal()" class="bg-primary text-white size-10 rounded-full material-symbols-outlined">add</button></div>`;
+                    let html = `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Libro</h2><button onclick="FamilyApp.ui.openRecipeModal()" class="bg-primary text-white size-10 rounded-full flex items-center justify-center material-symbols-outlined shadow-lg">add</button></div>
+                    <div class="mb-6 relative"><input type="text" id="libSearch" value="${query}" oninput="FamilyApp.render()" placeholder="Buscar..." class="w-full rounded-2xl border-none p-4 pl-12 text-sm bg-white shadow-sm"><span class="material-symbols-outlined absolute left-4 top-4 text-gray-300">search</span></div>`;
                     Object.keys(grouped).sort().forEach(sec => {
-                        html += `<div class="mb-4"><h3 class="text-[10px] font-bold text-primary mb-2 ml-2 uppercase">${sec}</h3>`;
-                        html += grouped[sec].map(r => `<div onclick="FamilyApp.ui.openRecipeModal('${r.id}')" class="bg-white p-4 rounded-3xl border shadow-sm mb-2 flex justify-between cursor-pointer"><span class="text-sm font-bold">${r.name}</span><span class="material-symbols-outlined text-gray-200">chevron_right</span></div>`).join('');
-                        html += `</div>`;
+                        html += `<div class="mb-4"><h3 class="text-[10px] font-bold uppercase text-primary mb-2 ml-2">${sec}</h3><div class="space-y-2">`;
+                        html += grouped[sec].map(r => `<div onclick="FamilyApp.ui.openRecipeModal('${r.id}')" class="bg-white p-4 rounded-3xl border shadow-sm flex justify-between items-center cursor-pointer"><div><p class="font-bold text-sm">${r.name}</p></div><span class="material-symbols-outlined text-gray-200">chevron_right</span></div>`).join('');
+                        html += `</div></div>`;
                     });
                     document.getElementById('biblioteca').innerHTML = html;
                 }
@@ -340,66 +335,52 @@
                     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active', 'text-primary'));
                     document.getElementById(id).classList.add('active');
                     document.querySelector(`[data-tab="${id}"]`).classList.add('active', 'text-primary');
-                    if(id === 'planner') {
-                        document.getElementById('planner').innerHTML = `<h2 class="text-2xl font-bold mb-6">IA Planner</h2><button onclick="alert('Funcionalidad en desarrollo')" class="bg-primary text-white w-full py-4 rounded-3xl font-bold">✨ Generar Menú Semanal</button>`;
-                    }
+                    if(id === 'planner') document.getElementById('planner').innerHTML = `<h2 class="text-2xl font-bold mb-6">IA Planner</h2><button id="btnAiGen" onclick="FamilyApp.ai.generateMenu()" class="bg-primary text-white w-full py-4 rounded-3xl font-bold shadow-lg">✨ Generar Menú Semanal</button><div id="plannerResults" class="mt-8 pb-20"></div>`;
                     FamilyApp.render();
+                },
+                openRecipeModal(id = null) {
+                    const r = id ? FamilyApp.state.library.find(x => x.id === id) : {name:'', section:'📖 Sin Sección', ing:'', steps:'', tip:''};
+                    FamilyApp.ui.openModal(`
+                        <div class="flex justify-between items-center mb-6"><h3 class="font-bold text-primary text-[10px] uppercase">${id ? 'Editar' : 'Nueva'}</h3><div class="flex gap-4">
+                        <button onclick="FamilyApp.ai.proposeRecipe(document.getElementById('libName').value)" class="material-symbols-outlined text-primary">auto_awesome</button>
+                        ${id ? `<button onclick="FamilyApp.actions.deleteRecipe('${id}')" class="material-symbols-outlined text-red-400">delete</button>` : ''}</div></div>
+                        <input type="hidden" id="libId" value="${id || ''}">
+                        <div class="space-y-4">
+                            <input type="text" id="libName" value="${r.name}" placeholder="Nombre" class="w-full rounded-2xl border-none bg-gray-50 p-4 font-bold text-sm">
+                            <select id="libSec" class="w-full rounded-2xl border-none bg-gray-50 p-4 text-xs">
+                                <option ${r.section==='📖 Sin Sección'?'selected':''}>📖 Sin Sección</option>
+                                <option ${r.section==='🥗 Entrantes'?'selected':''}>🥗 Entrantes</option>
+                                <option ${r.section==='🍝 Pasta'?'selected':''}>🍝 Pasta</option>
+                                <option ${r.section==='🥩 Carnes'?'selected':''}>🥩 Carnes</option>
+                            </select>
+                            <textarea id="libIng" placeholder="Ingredientes" class="w-full rounded-2xl border-none bg-gray-50 p-4 text-xs h-24">${r.ing}</textarea>
+                            <textarea id="libSteps" placeholder="Pasos" class="w-full rounded-2xl border-none bg-gray-50 p-4 text-xs h-24">${r.steps}</textarea>
+                        </div>
+                        <button onclick="FamilyApp.actions.saveRecipeManual()" class="w-full bg-[#101618] text-white py-4 rounded-2xl font-bold uppercase text-[10px] mt-6">Guardar Libro</button>
+                    `);
                 },
                 openMenuModal(ds) {
                     const m = FamilyApp.state.menu[ds] || {c:'', d:''};
-                    const getR = (n) => FamilyApp.state.library.find(x => x.name.toLowerCase() === n.toLowerCase());
-                    
-                    const drawLink = (name) => {
+                    const getR = (name) => FamilyApp.state.library.find(r => r.name.toLowerCase() === name.toLowerCase());
+                    const drawRecipeLink = (name) => {
                         if(!name) return '';
                         const r = getR(name);
-                        if(r) return `<button onclick="FamilyApp.ui.openRecipeModal('${r.id}')" class="mt-2 text-[10px] font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-lg">📖 VER RECETA</button>`;
-                        return `<button onclick="FamilyApp.ai.proposeRecipe('${name.replace(/'/g, "")}')" class="mt-2 text-[10px] font-bold text-primary uppercase">✨ Crear Receta IA</button>`;
+                        if(r) return `<div class="mt-2 p-3 bg-amber-50 rounded-xl text-[10px] border border-amber-100 cursor-pointer" onclick="FamilyApp.ui.openRecipeModal('${r.id}')"><p class="font-bold text-amber-800">📖 Ver Receta:</p><p>${r.ing.substring(0,30)}...</p></div>`;
+                        return `<button onclick="FamilyApp.ai.proposeRecipe('${name.replace(/'/g, "")}')" class="text-[10px] text-primary mt-2 font-bold uppercase">✨ Generar Receta IA</button>`;
                     };
-
                     FamilyApp.ui.openModal(`
-                        <h3 class="font-bold text-center text-primary mb-6 text-xs uppercase">${ds}</h3>
+                        <h3 class="font-bold text-center text-primary mb-6 text-[10px] uppercase">${ds}</h3>
                         <div class="space-y-6">
-                            <div>
-                                <label class="text-[9px] font-bold text-gray-400 uppercase ml-2">Comida</label>
-                                <div class="flex gap-2"><input type="text" id="mC" value="${m.c}" class="flex-grow rounded-2xl bg-gray-50 border-none p-4 text-sm"><button onclick="FamilyApp.actions.addItem(null, document.getElementById('mC').value)" class="bg-primary/10 text-primary p-3 rounded-xl material-symbols-outlined">shopping_cart</button></div>
-                                ${drawLink(m.c)}
-                            </div>
-                            <div>
-                                <label class="text-[9px] font-bold text-gray-400 uppercase ml-2">Cena</label>
-                                <div class="flex gap-2"><input type="text" id="mD" value="${m.d}" class="flex-grow rounded-2xl bg-gray-50 border-none p-4 text-sm"><button onclick="FamilyApp.actions.addItem(null, document.getElementById('mD').value)" class="bg-primary/10 text-primary p-3 rounded-xl material-symbols-outlined">shopping_cart</button></div>
-                                ${drawLink(m.d)}
-                            </div>
+                            <div><label class="text-[9px] font-bold text-gray-400 ml-2">COMIDA</label><div class="flex gap-2"><input type="text" id="mC" value="${m.c}" class="flex-grow rounded-2xl bg-gray-50 p-4 text-sm"><button onclick="FamilyApp.actions.addItem(null, document.getElementById('mC').value, this)" class="bg-primary/10 text-primary p-3 rounded-xl material-symbols-outlined">shopping_cart</button></div>${drawRecipeLink(m.c)}</div>
+                            <div><label class="text-[9px] font-bold text-gray-400 ml-2">CENA</label><div class="flex gap-2"><input type="text" id="mD" value="${m.d}" class="flex-grow rounded-2xl bg-gray-50 p-4 text-sm"><button onclick="FamilyApp.actions.addItem(null, document.getElementById('mD').value, this)" class="bg-primary/10 text-primary p-3 rounded-xl material-symbols-outlined">shopping_cart</button></div>${drawRecipeLink(m.d)}</div>
                         </div>
-                        <button onclick="FamilyApp.state.menu['${ds}']={c:document.getElementById('mC').value, d:document.getElementById('mD').value}; FamilyApp.save(); FamilyApp.ui.closeModal()" class="w-full bg-[#101618] text-white py-4 rounded-2xl font-bold mt-8 text-xs uppercase">Guardar Día</button>
-                    `);
-                },
-                openRecipeModal(id = null) {
-                    const r = id ? FamilyApp.state.library.find(x => x.id === id) : {name:'', section:'📖 Sin Sección', ing:'', steps:''};
-                    FamilyApp.ui.openModal(`
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="font-bold text-primary text-xs uppercase">${id ? 'Editar' : 'Nueva'} Receta</h3>
-                            ${id ? `<button onclick="FamilyApp.actions.deleteRecipe('${id}')" class="material-symbols-outlined text-red-400">delete</button>` : ''}
-                        </div>
-                        <input type="hidden" id="libId" value="${id || ''}">
-                        <div class="space-y-4">
-                            <input type="text" id="libName" value="${r.name}" placeholder="Nombre" class="w-full rounded-2xl bg-gray-50 border-none p-4 text-sm font-bold">
-                            <select id="libSec" class="w-full rounded-2xl bg-gray-50 border-none p-4 text-xs">
-                                <option ${r.section==='📖 Sin Sección'?'selected':''}>📖 Sin Sección</option>
-                                <option ${r.section==='🥗 Entrantes'?'selected':''}>🥗 Entrantes</option>
-                                <option ${r.section==='🥩 Carnes'?'selected':''}>🥩 Carnes</option>
-                                <option ${r.section==='🍝 Pasta'?'selected':''}>🍝 Pasta</option>
-                            </select>
-                            <textarea id="libIng" placeholder="Ingredientes" class="w-full rounded-2xl bg-gray-50 border-none p-4 text-xs h-24">${r.ing || ''}</textarea>
-                            <textarea id="libSteps" placeholder="Pasos" class="w-full rounded-2xl bg-gray-50 border-none p-4 text-xs h-24">${r.steps || ''}</textarea>
-                        </div>
-                        <button onclick="FamilyApp.actions.saveRecipeManual()" class="w-full bg-[#101618] text-white py-4 rounded-2xl font-bold mt-6 text-xs uppercase">Guardar en Libro</button>
+                        <button onclick="FamilyApp.state.menu['${ds}']={c:document.getElementById('mC').value, d:document.getElementById('mD').value}; FamilyApp.save(); FamilyApp.ui.closeModal()" class="w-full bg-[#101618] text-white py-4 rounded-2xl font-bold mt-8 uppercase text-[10px]">Guardar Día</button>
                     `);
                 },
                 openCategoryModal(id, name) {
                     const cats = ['🍎 Frutería', '🥩 Carnicería', '🐟 Pescadería', '🥛 Lácteos', '🍞 Panadería', '🧹 Limpieza', '🥤 Bebidas', '🚿 Baño'];
-                    FamilyApp.ui.openModal(`<h3 class="text-center mb-6 text-[10px] font-bold text-gray-400 uppercase">Sección para "${name}"</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        ${cats.map(c => `<button onclick="FamilyApp.actions.learnCategory(${id}, '${c}')" class="p-3 bg-gray-50 rounded-xl text-xs font-bold text-left border hover:bg-primary hover:text-white transition-colors uppercase">${c}</button>`).join('')}
+                    FamilyApp.ui.openModal(`<h3 class="text-center mb-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sección para "${name}"</h3><div class="grid grid-cols-2 gap-2">
+                        ${cats.map(c => `<button onclick="FamilyApp.actions.learnCategory(${id}, '${c}')" class="p-3 bg-gray-50 rounded-xl text-xs font-bold text-left border border-gray-100">${c}</button>`).join('')}
                     </div>`);
                 },
                 drawCalendar(tid) {
@@ -411,17 +392,15 @@
                     for(let d=1; d<=new Date(y, m+1, 0).getDate(); d++){
                         const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                         const hasMenu = FamilyApp.state.menu[ds] && (FamilyApp.state.menu[ds].c || FamilyApp.state.menu[ds].d);
-                        const c = document.createElement('div'); c.className = 'day-cell';
+                        const c = document.createElement('div'); c.className = 'day-cell bg-white';
                         c.innerHTML = `<span>${d}</span>${hasMenu ? '<div class="dot-menu"></div>' : ''}`;
-                        c.onclick = () => FamilyApp.ui.openMenuModal(ds); 
-                        g.appendChild(c);
+                        c.onclick = () => FamilyApp.ui.openMenuModal(ds); g.appendChild(c);
                     }
                 },
                 openModal(h) { document.getElementById('modalContent').innerHTML = h; document.getElementById('modalOverlay').classList.remove('hidden'); },
                 closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
             }
         };
-
         window.addEventListener('load', () => FamilyApp.init());
     </script>
 </body>

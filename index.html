@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Salchipapas PRO - Lista Compra Fix</title>
+    <title>Salchipapas PRO - Fix Final</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -97,9 +97,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        const cloudRef = ref(db, 'family_v9');
-        const pinRef = ref(db, 'family_v9/config/accessPin');
-        const aiKeyRef = ref(db, 'family_v9/config/aiApiKey');
+        const cloudRef = ref(db, 'family_9');
+        const pinRef = ref(db, 'family_9/config/accessPin');
+        const aiKeyRef = ref(db, 'family_9/config/aiApiKey');
 
         window.FamilyApp = {
             state: { menu: {}, shopping: [], dictionary: {}, library: [] },
@@ -159,8 +159,8 @@
                     let start = new Date();
                     start.setDate(start.getDate() + (1 + 7 - start.getDay()) % 7);
                     
-                    const prompt = `Eres un nutricionista familiar. Crea un menú de 7 días (comida y cena) empezando el ${start.toISOString().split('T')[0]}. 
-                    Responde SOLO un array JSON con este formato: [{"date":"YYYY-MM-DD","c":"Nombre del plato comida","d":"Nombre del plato cena"}].`;
+                    const prompt = `Crea un menú de 7 días (comida y cena) desde ${start.toISOString().split('T')[0]}. 
+                    Responde SOLO un array JSON: [{"date":"YYYY-MM-DD","c":"Plato Comida","d":"Plato Cena"}].`;
 
                     try {
                         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -222,6 +222,10 @@
                         });
                         const data = await response.json();
                         const r = JSON.parse(data.choices[0].message.content.match(/\{.*\}/s)[0]);
+                        
+                        // Guardamos receta en una variable global temporal para evitar errores de escape de strings en el onclick
+                        window._tempRecipe = r;
+
                         FamilyApp.ui.openModal(`
                             <h3 class="font-bold text-primary text-sm mb-4 uppercase">Propuesta de Receta</h3>
                             <div class="space-y-4 text-left">
@@ -229,17 +233,19 @@
                                 <div><label class="text-[9px] font-bold text-gray-400">INGREDIENTES</label><p class="text-xs text-gray-600">${r.ing}</p></div>
                                 <div><label class="text-[9px] font-bold text-gray-400">PASOS</label><p class="text-xs text-gray-600">${r.steps}</p></div>
                             </div>
-                            <button onclick="FamilyApp.ai.confirmSaveRecipe('${dishName}', ${JSON.stringify(r).replace(/"/g, '&quot;')})" class="w-full bg-success text-white py-4 rounded-2xl font-bold uppercase text-[10px] mt-6">✓ Guardar en mi Libro</button>
+                            <button onclick="FamilyApp.ai.confirmSaveRecipe('${dishName}')" class="w-full bg-success text-white py-4 rounded-2xl font-bold uppercase text-[10px] mt-6">✓ Guardar en mi Libro</button>
                         `);
                     } catch (e) { alert("Error IA"); FamilyApp.ui.closeModal(); }
                 },
 
-                confirmSaveRecipe(name, r) {
+                confirmSaveRecipe(name) {
+                    const r = window._tempRecipe;
                     const newId = Date.now().toString();
                     FamilyApp.state.library.push({ id: newId, name, section: '📖 Sin Sección', ...r });
                     FamilyApp.save();
                     alert("¡Receta guardada!");
                     FamilyApp.ui.closeModal();
+                    delete window._tempRecipe;
                 }
             },
 
@@ -364,7 +370,7 @@
                     const grouped = {};
                     recipes.forEach(r => { const sec = r.section || '📖 Sin Sección'; if(!grouped[sec]) grouped[sec] = []; grouped[sec].push(r); });
 
-                    let html = `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Libro Recetas</h2><button onclick="FamilyApp.ui.openRecipeModal()" class="bg-primary text-white size-10 rounded-full flex items-center justify-center material-symbols-outlined shadow-lg">add</button></div>
+                    let html = `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Libro Recetas</h2><div class="flex gap-2"><button onclick="FamilyApp.ui.openRecipeModal()" class="bg-primary text-white size-10 rounded-full flex items-center justify-center material-symbols-outlined shadow-lg">add</button></div></div>
                     <div class="mb-6 relative"><input type="text" id="libSearch" value="${query}" oninput="FamilyApp.render()" placeholder="Buscar receta..." class="w-full rounded-2xl border-none p-4 pl-12 text-sm bg-white shadow-sm"><span class="material-symbols-outlined absolute left-4 top-4 text-gray-300">search</span></div>`;
                     
                     Object.keys(grouped).sort().forEach(sec => {
@@ -393,7 +399,10 @@
                     FamilyApp.ui.openModal(`
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="font-bold text-primary text-[10px] uppercase">${id ? 'Editar' : 'Nueva'} Receta</h3>
-                            ${id ? `<button onclick="FamilyApp.actions.deleteRecipe('${id}')" class="material-symbols-outlined text-red-400">delete</button>` : ''}
+                            <div class="flex gap-4">
+                                <button onclick="FamilyApp.ai.proposeRecipe(document.getElementById('libName').value)" class="material-symbols-outlined text-primary">auto_awesome</button>
+                                ${id ? `<button onclick="FamilyApp.actions.deleteRecipe('${id}')" class="material-symbols-outlined text-red-400">delete</button>` : ''}
+                            </div>
                         </div>
                         <input type="hidden" id="libId" value="${id || ''}">
                         <div class="space-y-4">
@@ -418,7 +427,7 @@
                     const drawRecipeLink = (name) => {
                         if(!name) return '';
                         const r = getR(name);
-                        if(r) return `<div class="mt-2 p-3 bg-amber-50 rounded-xl text-[10px] border border-amber-100"><p class="font-bold text-amber-800">📖 Receta en Libro:</p><p>${r.ing.substring(0,50)}...</p></div>`;
+                        if(r) return `<div class="mt-2 p-3 bg-amber-50 rounded-xl text-[10px] border border-amber-100 cursor-pointer" onclick="FamilyApp.ui.openRecipeModal('${r.id}')"><p class="font-bold text-amber-800">📖 Ver Receta:</p><p>${r.ing.substring(0,50)}...</p></div>`;
                         return `<button onclick="FamilyApp.ai.proposeRecipe('${name}')" class="text-[10px] text-primary mt-2 font-bold uppercase tracking-tighter">✨ Crear Receta con IA</button>`;
                     };
                     FamilyApp.ui.openModal(`
@@ -459,4 +468,3 @@
     </script>
 </body>
 </html>
-

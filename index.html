@@ -106,9 +106,9 @@
         const firebaseConfig = { databaseURL: "https://familyhub-f33f9-default-rtdb.europe-west1.firebasedatabase.app/" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const cloudRef = ref(db, 'family_v8');
-        const pinRef = ref(db, 'family_v8/config/accessPin');
-        const aiKeyRef = ref(db, 'family_v8/config/aiApiKey');
+        const cloudRef = ref(db, 'family_v9');
+        const pinRef = ref(db, 'family_v9/config/accessPin');
+        const aiKeyRef = ref(db, 'family_v9/config/aiApiKey');
 
         // --- VALORES POR DEFECTO PARA NUEVA INSTALACIÓN O MIGRACIÓN ---
         const DEFAULT_CONFIG = {
@@ -684,3 +684,4 @@
     </script>
 </body>
 </html>
+

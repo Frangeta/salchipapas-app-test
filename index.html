@@ -107,10 +107,10 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        // CORRECCIÓN 1: Base de datos family_9
-        const cloudRef = ref(db, 'family_9');
-        const pinRef = ref(db, 'family_9/config/accessPin');
-        const aiKeyRef = ref(db, 'family_9/config/aiApiKey');
+        // CORRECCIÓN 1: Base de datos family_v9
+        const cloudRef = ref(db, 'family_v9');
+        const pinRef = ref(db, 'family_v9/config/accessPin');
+        const aiKeyRef = ref(db, 'family_v9/config/aiApiKey');
 
         // VALORES POR DEFECTO ROBUSTOS
         const DEFAULT_CONFIG = {
@@ -701,3 +701,4 @@
     </script>
 </body>
 </html>
+

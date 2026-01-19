@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Salchipapas PRO - Configurable</title>
+    <title>Salchipapas PRO - Family V9</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -106,11 +106,13 @@
         const firebaseConfig = { databaseURL: "https://familyhub-f33f9-default-rtdb.europe-west1.firebasedatabase.app/" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const cloudRef = ref(db, 'family_v9');
-        const pinRef = ref(db, 'family_v9/config/accessPin');
-        const aiKeyRef = ref(db, 'family_v9/config/aiApiKey');
+        
+        // CORRECCIÓN 1: Base de datos family_9
+        const cloudRef = ref(db, 'family_9');
+        const pinRef = ref(db, 'family_9/config/accessPin');
+        const aiKeyRef = ref(db, 'family_9/config/aiApiKey');
 
-        // --- VALORES POR DEFECTO PARA NUEVA INSTALACIÓN O MIGRACIÓN ---
+        // VALORES POR DEFECTO ROBUSTOS
         const DEFAULT_CONFIG = {
             family: { adults: 2, kids: "9 y 13", notes: "Comida equilibrada" },
             prompts: {
@@ -140,7 +142,7 @@
         };
 
         window.FamilyApp = {
-            state: { menu: {}, shopping: [], dictionary: {}, library: [], config: DEFAULT_CONFIG },
+            state: { menu: {}, shopping: [], dictionary: {}, library: [], config: null },
             currentMonth: new Date(),
             remotePin: null,
             aiKey: null,
@@ -163,25 +165,42 @@
                     
                     onValue(cloudRef, (snapshot) => {
                         const data = snapshot.val();
+                        // CORRECCIÓN 2: Lógica de inicialización segura
                         if (data) {
                             this.state = { ...this.state, ...data };
-                            // Asegurar arrays y config por defecto si faltan
-                            if (!this.state.library) this.state.library = [];
-                            if (!this.state.shopping) this.state.shopping = [];
-                            if (!this.state.dictionary) this.state.dictionary = {};
-                            if (!this.state.config) this.state.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-                            
-                            // Merge recursivo simple para asegurar que existan categorías si se añaden nuevas claves
-                            if(!this.state.config.categories) this.state.config.categories = DEFAULT_CONFIG.categories;
-                            if(!this.state.config.family) this.state.config.family = DEFAULT_CONFIG.family;
-                        } else {
-                            // Primera vez
-                            this.state.config = DEFAULT_CONFIG;
+                        }
+                        
+                        // GARANTIZAR QUE SIEMPRE EXISTE CONFIG
+                        this.ensureConfigIntegrity();
+
+                        // Si es la primera vez (base de datos vacía), guardamos los defaults
+                        if (!data) {
                             this.save();
                         }
+                        
                         this.render();
                     });
-                } catch (e) { console.error(e); }
+                } catch (e) { console.error("Error Init:", e); }
+            },
+
+            // NUEVA FUNCIÓN DE SEGURIDAD
+            ensureConfigIntegrity() {
+                // Si no hay config, se pone la default entera
+                if (!this.state.config) {
+                    this.state.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+                } else {
+                    // Si existe config pero faltan partes, se rellenan
+                    if (!this.state.config.family) this.state.config.family = DEFAULT_CONFIG.family;
+                    if (!this.state.config.prompts) this.state.config.prompts = DEFAULT_CONFIG.prompts;
+                    if (!this.state.config.categories) this.state.config.categories = DEFAULT_CONFIG.categories;
+                    if (!this.state.config.categories.shop) this.state.config.categories.shop = DEFAULT_CONFIG.categories.shop;
+                    if (!this.state.config.categories.recipe) this.state.config.categories.recipe = DEFAULT_CONFIG.categories.recipe;
+                }
+                
+                // Asegurar arrays vacíos si fallan
+                if (!this.state.library) this.state.library = [];
+                if (!this.state.shopping) this.state.shopping = [];
+                if (!this.state.dictionary) this.state.dictionary = {};
             },
 
             security: {
@@ -229,9 +248,10 @@
                     let start = new Date();
                     start.setDate(start.getDate() + (1 + 7 - start.getDay()) % 7);
                     
-                    // USAMOS LA CONFIGURACIÓN DEL USUARIO
-                    const fam = FamilyApp.state.config.family;
-                    const promptBase = FamilyApp.state.config.prompts.menu || DEFAULT_CONFIG.prompts.menu;
+                    // CORRECCIÓN 3: Uso seguro de variables config con fallback
+                    const config = FamilyApp.state.config || DEFAULT_CONFIG;
+                    const fam = config.family || DEFAULT_CONFIG.family;
+                    const promptBase = (config.prompts && config.prompts.menu) ? config.prompts.menu : DEFAULT_CONFIG.prompts.menu;
                     
                     const context = `Familia de ${fam.adults} adultos y niños (${fam.kids}). Notas dietéticas: ${fam.notes}. Fecha inicio: ${start.toISOString().split('T')[0]}.`;
                     const fullPrompt = `Actúa como nutricionista. ${context} ${promptBase}`;
@@ -273,8 +293,11 @@
                     if(!dishName) return;
                     FamilyApp.ui.openModal(`<div class="text-center py-10"><p class="text-sm text-gray-400 animate-pulse">Generando receta familiar para ${dishName}...</p></div>`);
                     
-                    const fam = FamilyApp.state.config.family;
-                    const promptBase = FamilyApp.state.config.prompts.recipe || DEFAULT_CONFIG.prompts.recipe;
+                    // CORRECCIÓN 4: Uso seguro de variables de receta
+                    const config = FamilyApp.state.config || DEFAULT_CONFIG;
+                    const fam = config.family || DEFAULT_CONFIG.family;
+                    const promptBase = (config.prompts && config.prompts.recipe) ? config.prompts.recipe : DEFAULT_CONFIG.prompts.recipe;
+
                     const context = `Receta para "${dishName}" (Familia: ${fam.adults} adultos, niños ${fam.kids}).`;
                     const fullPrompt = `${context} ${promptBase}`;
 
@@ -312,23 +335,19 @@
             },
 
             actions: {
-                // GENERAL
                 addItem(inputId, manualValue = null, btn = null) {
                     const el = document.getElementById(inputId);
                     const val = manualValue || (el ? el.value.trim() : '');
                     if(!val) return;
-                    let category = 'Otros'; // Default fallback
-                    // Buscar en el diccionario
-                    const lower = val.toLowerCase();
-                    const shopCats = FamilyApp.state.config.categories.shop;
                     
-                    // Asignación inteligente basada en categorías dinámicas
+                    // CORRECCIÓN 5: Acceso seguro a categorías de shop
+                    const shopCats = FamilyApp.state.config.categories.shop || DEFAULT_CONFIG.categories.shop;
+                    
                     let foundCatId = null;
                     for (const [catName, words] of Object.entries(FamilyApp.state.dictionary)) {
-                        if (words.some(w => lower.includes(w))) { 
-                            // Buscamos si el nombre del diccionario coincide con alguna categoría actual
+                        if (words.some(w => val.toLowerCase().includes(w))) { 
                             const catObj = shopCats.find(c => c.name === catName);
-                            if(catObj) foundCatId = catObj.name; // Usamos el nombre como enlace
+                            if(catObj) foundCatId = catObj.name;
                             break; 
                         }
                     }
@@ -341,7 +360,6 @@
                     FamilyApp.save();
                 },
                 
-                // SHOPPING
                 toggleShop(id) {
                     const item = FamilyApp.state.shopping.find(i => i.id == id);
                     if(item) { item.checked = !item.checked; FamilyApp.save(); }
@@ -361,11 +379,9 @@
                     if(confirm("¿Borrar comprados?")) { FamilyApp.state.shopping = FamilyApp.state.shopping.filter(i => !i.checked); FamilyApp.save(); }
                 },
 
-                // RECIPES
                 confirmSaveAiRecipe(name) {
                     const recipe = window._currentAiRecipe;
                     if(!recipe) return;
-                    // Busca categoría por defecto
                     const defCat = FamilyApp.state.config.categories.recipe[0]?.name || 'Sin Sección';
                     
                     const exists = FamilyApp.state.library.find(x => x.name.toLowerCase() === name.toLowerCase());
@@ -390,7 +406,6 @@
                 },
                 deleteRecipe(id) { if(confirm("¿Borrar?")) { FamilyApp.state.library = FamilyApp.state.library.filter(r => r.id != id); FamilyApp.save(); FamilyApp.ui.closeModal(); } },
 
-                // CONFIG ACTIONS
                 saveConfig() {
                     const adults = document.getElementById('cfgAdults').value;
                     const kids = document.getElementById('cfgKids').value;
@@ -450,7 +465,7 @@
                     if(cat) cat.icon = icon;
                     FamilyApp.save();
                     FamilyApp.ui.closeModal();
-                    FamilyApp.components.config(); // Refresh config view
+                    FamilyApp.components.config();
                 }
             },
 
@@ -480,11 +495,10 @@
                     const pending = items.filter(i => !i.checked);
                     const done = items.filter(i => i.checked);
                     
-                    // Categorías Dinámicas
-                    const catsConfig = FamilyApp.state.config.categories.shop;
+                    // CORRECCIÓN 6: Acceso seguro a configuración
+                    const catsConfig = FamilyApp.state.config.categories.shop || DEFAULT_CONFIG.categories.shop;
                     const grouped = {};
                     
-                    // Inicializar grupos basados en config
                     catsConfig.forEach(c => grouped[c.name] = { meta: c, items: [] });
                     grouped['Otros'] = { meta: {name:'Otros', icon:'package_2'}, items: [] };
 
@@ -514,8 +528,7 @@
                     const query = (document.getElementById('libSearch')?.value || '').toLowerCase();
                     const recipes = (FamilyApp.state.library || []).filter(r => r.name.toLowerCase().includes(query));
                     
-                    // Categorías Dinámicas
-                    const catsConfig = FamilyApp.state.config.categories.recipe;
+                    const catsConfig = FamilyApp.state.config.categories.recipe || DEFAULT_CONFIG.categories.recipe;
                     const grouped = {};
                     catsConfig.forEach(c => grouped[c.name] = { meta: c, items: [] });
                     grouped['Sin Sección'] = { meta: {name:'Sin Sección', icon:'menu_book'}, items: [] };
@@ -539,7 +552,8 @@
                     document.getElementById('biblioteca').innerHTML = html;
                 },
                 config() {
-                    const c = FamilyApp.state.config;
+                    // Aseguramos que tenemos config antes de renderizar
+                    const c = FamilyApp.state.config || DEFAULT_CONFIG;
                     
                     const renderCatList = (type, list) => list.map(cat => `
                         <div class="flex items-center justify-between bg-white p-3 rounded-xl border mb-2 text-xs">
@@ -618,8 +632,9 @@
                 openRecipeModal(id = null) {
                     const r = id ? FamilyApp.state.library.find(x => x.id == id) : {name:'', section:'Sin Sección', ing:'', steps:''};
                     
-                    // Selector dinámico de secciones
-                    const catOptions = FamilyApp.state.config.categories.recipe.map(c => 
+                    // Selector dinámico de secciones seguro
+                    const cats = FamilyApp.state.config.categories.recipe || DEFAULT_CONFIG.categories.recipe;
+                    const catOptions = cats.map(c => 
                         `<option ${r.section === c.name ? 'selected' : ''}>${c.name}</option>`
                     ).join('');
 
@@ -659,7 +674,9 @@
                     `);
                 },
                 openCategoryModal(id, name) {
-                    const cats = FamilyApp.state.config.categories.shop.map(c => c.name);
+                    // Acceso seguro a cats
+                    const catsList = FamilyApp.state.config.categories.shop || DEFAULT_CONFIG.categories.shop;
+                    const cats = catsList.map(c => c.name);
                     FamilyApp.ui.openModal(`<h3 class="text-center mb-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pasillo para "${name}"</h3><div class="grid grid-cols-2 gap-2">${cats.map(c => `<button onclick="FamilyApp.actions.learnCategory('${id}', '${c}')" class="p-3 bg-gray-50 rounded-xl text-xs font-bold text-left border border-gray-100">${c}</button>`).join('')}</div>`);
                 },
                 drawCalendar(tid) {
@@ -684,4 +701,3 @@
     </script>
 </body>
 </html>
-

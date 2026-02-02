@@ -12,3 +12,6 @@ family management app
   * IA recipes
   * Book of recipes
   
+* V3.0
+  * Refactor 
+  

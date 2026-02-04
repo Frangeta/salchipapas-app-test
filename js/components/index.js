@@ -3,24 +3,7 @@ import { DEFAULT_CONFIG } from '../constants/defaultConfig.js';
 export function createComponents(app) {
     return {
         menu() {
-            let curr = new Date();
-            let first = curr.getDate() - (curr.getDay() === 0 ? 6 : curr.getDay() - 1);
-            let weekHtml = '';
-            for (let i = 0; i < 7; i++) {
-                let d = new Date(new Date().setDate(first + i));
-                let ds = d.toISOString().split('T')[0];
-                let m = app.state.menu[ds] || {c:'', d:''};
-                weekHtml += `<div class="bg-white p-4 rounded-3xl border border-gray-100 mb-3 shadow-sm flex items-center gap-4">
-                    <div class="w-10 text-center text-primary"><p class="text-[9px] font-bold uppercase">${new Intl.DateTimeFormat('es',{weekday:'short'}).format(d)}</p><p class="text-lg font-bold">${d.getDate()}</p></div>
-                    <div class="flex-grow text-xs border-l pl-4 space-y-1">
-                        <div class="truncate ${m.c ? 'text-gray-900 font-bold' : 'text-gray-300'}">☀️ ${m.c || '---'}</div>
-                        <div class="truncate ${m.d ? 'text-gray-900 font-bold' : 'text-gray-300'}">🌙 ${m.d || '---'}</div>
-                    </div>
-                    <button data-action="open-menu-modal" data-date="${ds}" class="text-gray-300 material-symbols-outlined">edit_square</button>
-                </div>`;
-            }
-            document.getElementById('menu').innerHTML = `<h2 class="text-2xl font-bold mb-6">Menú Semanal</h2>${weekHtml}<div class="bg-white rounded-[2.5rem] p-6 mt-8 border"><div class="calendar-grid" id="gridMenu"></div></div>`;
-            app.ui.drawCalendar('gridMenu');
+            app.calendarUi.renderMenuTab();
         },
         biblioteca() {
             const query = (document.getElementById('libSearch')?.value || '').toLowerCase();

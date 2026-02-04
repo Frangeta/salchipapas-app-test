@@ -62,22 +62,6 @@ export function createUi(app) {
             const cats = catsList.map(c => c.name);
             app.ui.openModal(`<h3 class="text-center mb-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pasillo para "${name}"</h3><div class="grid grid-cols-2 gap-2">${cats.map(c => `<button data-action="learn-category" data-item-id="${id}" data-category="${escapeAttr(c)}" class="p-3 bg-gray-50 rounded-xl text-xs font-bold text-left border border-gray-100">${c}</button>`).join('')}</div>`);
         },
-        drawCalendar(tid) {
-            const g = document.getElementById(tid); if (!g) return;
-            g.innerHTML = '';
-            const y = app.currentMonth.getFullYear(), m = app.currentMonth.getMonth();
-            const first = (new Date(y, m, 1).getDay() + 6) % 7;
-            for (let i = 0; i < first; i++) g.innerHTML += '<div></div>';
-            for (let d = 1; d <= new Date(y, m + 1, 0).getDate(); d++) {
-                const ds = `${y}-${String(m + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const hasMenu = app.state.menu[ds] && (app.state.menu[ds].c || app.state.menu[ds].d);
-                const c = document.createElement('div'); c.className = 'day-cell bg-white';
-                c.innerHTML = `<span>${d}</span>${hasMenu ? '<div class="dot-menu"></div>' : ''}`;
-                c.dataset.action = 'open-menu-modal';
-                c.dataset.date = ds;
-                g.appendChild(c);
-            }
-        },
         openModal(h) {
             document.getElementById('modalContent').innerHTML = h;
             document.getElementById('modalOverlay').classList.remove('hidden');

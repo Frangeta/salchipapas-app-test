@@ -5,6 +5,7 @@ import { createAi } from './services/ai.js';
 import { createActions } from './actions/index.js';
 import { createComponents } from './components/index.js';
 import { createUi } from './ui/index.js';
+import { createCalendarUi } from './ui/calendar.js';
 import { createShoppingUi } from './ui/shopping.js';
 import { getState, setState } from './state/store.js';
 
@@ -64,6 +65,7 @@ FamilyApp.ai = createAi(FamilyApp);
 FamilyApp.actions = createActions(FamilyApp, { aiKeyRef });
 FamilyApp.components = createComponents(FamilyApp);
 FamilyApp.ui = createUi(FamilyApp);
+FamilyApp.calendarUi = createCalendarUi(FamilyApp);
 FamilyApp.shoppingUi = createShoppingUi(FamilyApp);
 
 const tabRouter = createTabRouter(FamilyApp);
@@ -77,6 +79,9 @@ function handleActionClick(event) {
     const { action, tab } = actionEl.dataset;
 
     if (FamilyApp.shoppingUi?.handleAction(actionEl)) {
+        return;
+    }
+    if (FamilyApp.calendarUi?.handleAction(actionEl)) {
         return;
     }
     if (action === 'reload') {
@@ -119,20 +124,6 @@ function handleActionClick(event) {
     }
     if (action === 'open-recipe-modal') {
         FamilyApp.ui.openRecipeModal(actionEl.dataset.id || null);
-        return;
-    }
-    if (action === 'update-menu') {
-        const date = actionEl.dataset.date;
-        FamilyApp.state.menu[date] = {
-            c: document.getElementById('mC')?.value || '',
-            d: document.getElementById('mD')?.value || ''
-        };
-        FamilyApp.save();
-        FamilyApp.ui.closeModal();
-        return;
-    }
-    if (action === 'open-menu-modal') {
-        FamilyApp.ui.openMenuModal(actionEl.dataset.date);
         return;
     }
     if (action === 'save-icon') {

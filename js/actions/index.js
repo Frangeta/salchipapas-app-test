@@ -1,51 +1,7 @@
-import { DEFAULT_CONFIG } from '../constants/defaultConfig.js';
 import { set } from '../services/firebase.js';
 
 export function createActions(app, { aiKeyRef }) {
     return {
-        addItem(inputId, manualValue = null, btn = null) {
-            const el = document.getElementById(inputId);
-            const val = manualValue || (el ? el.value.trim() : '');
-            if (!val) return;
-
-            const shopCats = app.state.config.categories.shop || DEFAULT_CONFIG.categories.shop;
-
-            let foundCatId = null;
-            for (const [catName, words] of Object.entries(app.state.dictionary)) {
-                if (words.some(w => val.toLowerCase().includes(w))) {
-                    const catObj = shopCats.find(c => c.name === catName);
-                    if (catObj) foundCatId = catObj.name;
-                    break;
-                }
-            }
-
-            if (!app.state.shopping) app.state.shopping = [];
-            app.state.shopping.push({ id: Date.now().toString(), name: val, checked: false, category: foundCatId || 'Otros' });
-
-            if (manualValue && btn) { btn.innerText = 'done'; btn.classList.add('bg-success', 'text-white'); }
-            if (!manualValue && el) el.value = '';
-            app.save();
-        },
-
-        toggleShop(id) {
-            const item = app.state.shopping.find(i => i.id == id);
-            if (item) { item.checked = !item.checked; app.save(); }
-        },
-        learnCategory(itemId, newCatName) {
-            const item = app.state.shopping.find(i => i.id == itemId);
-            if (!item) return;
-            item.category = newCatName;
-
-            if (!app.state.dictionary[newCatName]) app.state.dictionary[newCatName] = [];
-            const word = item.name.toLowerCase();
-            if (!app.state.dictionary[newCatName].includes(word)) app.state.dictionary[newCatName].push(word);
-
-            app.save(); app.ui.closeModal();
-        },
-        clearDone() {
-            if (confirm("¿Borrar comprados?")) { app.state.shopping = app.state.shopping.filter(i => !i.checked); app.save(); }
-        },
-
         confirmSaveAiRecipe(name) {
             const recipe = window._currentAiRecipe;
             if (!recipe) return;

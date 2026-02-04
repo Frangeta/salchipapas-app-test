@@ -73,20 +73,125 @@ function handleActionClick(event) {
 
     if (action === 'reload') {
         location.reload();
+        return;
     }
     if (action === 'check-pin') {
         FamilyApp.security.checkPin();
+        return;
     }
     if (action === 'logout') {
         FamilyApp.security.logout();
+        return;
     }
     if (action === 'switch-tab' && tab) {
         FamilyApp.ui.switchTab(tab);
+        return;
     }
     if (action === 'close-modal') {
         FamilyApp.ui.closeModal();
+        return;
+    }
+    if (action === 'ai-generate-menu') {
+        FamilyApp.ai.generateMenu(actionEl);
+        return;
+    }
+    if (action === 'ai-propose-recipe') {
+        const sourceId = actionEl.dataset.sourceId;
+        const name = sourceId ? document.getElementById(sourceId)?.value : actionEl.dataset.recipeName;
+        FamilyApp.ai.proposeRecipe(name?.trim());
+        return;
+    }
+    if (action === 'delete-recipe') {
+        FamilyApp.actions.deleteRecipe(actionEl.dataset.id);
+        return;
+    }
+    if (action === 'save-recipe-manual') {
+        FamilyApp.actions.saveRecipeManual();
+        return;
+    }
+    if (action === 'open-recipe-modal') {
+        FamilyApp.ui.openRecipeModal(actionEl.dataset.id || null);
+        return;
+    }
+    if (action === 'add-item') {
+        const inputId = actionEl.dataset.inputId;
+        const isManual = actionEl.dataset.manual === 'true';
+        if (isManual) {
+            const value = inputId ? document.getElementById(inputId)?.value : '';
+            FamilyApp.actions.addItem(null, value?.trim(), actionEl);
+        } else {
+            FamilyApp.actions.addItem(inputId);
+        }
+        return;
+    }
+    if (action === 'update-menu') {
+        const date = actionEl.dataset.date;
+        FamilyApp.state.menu[date] = {
+            c: document.getElementById('mC')?.value || '',
+            d: document.getElementById('mD')?.value || ''
+        };
+        FamilyApp.save();
+        FamilyApp.ui.closeModal();
+        return;
+    }
+    if (action === 'learn-category') {
+        FamilyApp.actions.learnCategory(actionEl.dataset.itemId, actionEl.dataset.category);
+        return;
+    }
+    if (action === 'open-menu-modal') {
+        FamilyApp.ui.openMenuModal(actionEl.dataset.date);
+        return;
+    }
+    if (action === 'save-icon') {
+        FamilyApp.actions.saveIcon(actionEl.dataset.type, actionEl.dataset.id, actionEl.dataset.icon);
+        return;
+    }
+    if (action === 'ai-accept') {
+        FamilyApp.ai.accept(actionEl.dataset.date, actionEl.dataset.type, actionEl.dataset.value, actionEl);
+        return;
+    }
+    if (action === 'confirm-save-ai-recipe') {
+        FamilyApp.actions.confirmSaveAiRecipe(actionEl.dataset.name);
+        return;
+    }
+    if (action === 'toggle-shop') {
+        FamilyApp.actions.toggleShop(actionEl.dataset.id);
+        return;
+    }
+    if (action === 'open-category-modal') {
+        FamilyApp.ui.openCategoryModal(actionEl.dataset.id, actionEl.dataset.name);
+        return;
+    }
+    if (action === 'clear-done') {
+        FamilyApp.actions.clearDone();
+        return;
+    }
+    if (action === 'edit-category-icon') {
+        FamilyApp.actions.editCategoryIcon(actionEl.dataset.type, actionEl.dataset.id);
+        return;
+    }
+    if (action === 'delete-category') {
+        FamilyApp.actions.deleteCategory(actionEl.dataset.type, actionEl.dataset.id);
+        return;
+    }
+    if (action === 'add-category') {
+        FamilyApp.actions.addCategory(actionEl.dataset.type);
+        return;
+    }
+    if (action === 'save-config') {
+        FamilyApp.actions.saveConfig();
+    }
+}
+
+function handleActionInput(event) {
+    const actionEl = event.target.closest('[data-action]');
+    if (!actionEl) return;
+
+    if (actionEl.dataset.action === 'search-library') {
+        FamilyApp.render();
     }
 }
 
 window.addEventListener('load', () => FamilyApp.init());
 document.addEventListener('click', handleActionClick);
+document.addEventListener('input', handleActionInput);

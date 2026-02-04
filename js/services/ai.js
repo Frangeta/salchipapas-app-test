@@ -23,9 +23,8 @@ export function createAi(app) {
             }
         },
 
-        async generateMenu() {
+        async generateMenu(btn = null) {
             if (!app.aiKey) return alert("Falta API Key");
-            const btn = document.getElementById('btnAiGen');
             if (btn) { btn.disabled = true; btn.innerText = "Pensando menú..."; }
 
             let start = new Date();
@@ -54,12 +53,13 @@ export function createAi(app) {
         renderAiResults(plan) {
             const res = document.getElementById('plannerResults');
             if (!res) return;
+            const escapeAttr = (value) => String(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             res.innerHTML = plan.map(d => `
                 <div class="bg-white p-4 rounded-3xl border mb-4 shadow-sm">
                     <p class="text-[10px] font-bold text-primary mb-3 uppercase tracking-widest">${d.date}</p>
                     <div class="space-y-2">
-                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl text-xs"><span>☀️ ${d.c}</span><button onclick="FamilyApp.ai.accept('${d.date}','c','${d.c}', this)" class="bg-white size-8 rounded-xl border flex items-center justify-center">✓</button></div>
-                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl text-xs"><span>🌙 ${d.d}</span><button onclick="FamilyApp.ai.accept('${d.date}','d','${d.d}', this)" class="bg-white size-8 rounded-xl border flex items-center justify-center">✓</button></div>
+                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl text-xs"><span>☀️ ${d.c}</span><button data-action="ai-accept" data-date="${d.date}" data-type="c" data-value="${escapeAttr(d.c)}" class="bg-white size-8 rounded-xl border flex items-center justify-center">✓</button></div>
+                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl text-xs"><span>🌙 ${d.d}</span><button data-action="ai-accept" data-date="${d.date}" data-type="d" data-value="${escapeAttr(d.d)}" class="bg-white size-8 rounded-xl border flex items-center justify-center">✓</button></div>
                     </div>
                 </div>`).join('');
         },
@@ -100,7 +100,7 @@ export function createAi(app) {
                         <p class="text-xs text-gray-600 whitespace-pre-line leading-relaxed"><b>👨‍🍳 Pasos:</b>\n${r.steps}</p>
                         <p class="text-[10px] italic text-primary bg-primary/5 p-3 rounded-xl"><b>💡 Tip:</b> ${r.tip}</p>
                     </div>
-                    <button onclick="FamilyApp.actions.confirmSaveAiRecipe('${dishName.replace(/'/g, "\\'")}')" class="w-full bg-success text-white py-4 rounded-2xl font-bold uppercase text-[10px] mt-6">✓ Guardar en Libro</button>
+                    <button data-action="confirm-save-ai-recipe" data-name="${dishName.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" class="w-full bg-success text-white py-4 rounded-2xl font-bold uppercase text-[10px] mt-6">✓ Guardar en Libro</button>
                 `);
             } catch (e) { console.error(e); alert("Error de formato en la respuesta de la IA."); app.ui.closeModal(); }
         }

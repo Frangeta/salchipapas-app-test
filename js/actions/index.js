@@ -128,7 +128,7 @@ export function createActions(app, { aiKeyRef }) {
             ];
 
             let html = `<h3 class="font-bold text-center mb-4">Selecciona Icono para "${cat.name}"</h3><div class="icon-grid">`;
-            html += icons.map(ic => `<div class="icon-option" onclick="FamilyApp.actions.saveIcon('${type}','${id}','${ic}')"><span class="material-symbols-outlined">${ic}</span></div>`).join('');
+            html += icons.map(ic => `<div class="icon-option" data-action="save-icon" data-type="${type}" data-id="${id}" data-icon="${ic}"><span class="material-symbols-outlined">${ic}</span></div>`).join('');
             html += `</div>`;
             app.ui.openModal(html);
         },

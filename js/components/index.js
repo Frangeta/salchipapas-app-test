@@ -1,6 +1,8 @@
 import { DEFAULT_CONFIG } from '../constants/defaultConfig.js';
 
 export function createComponents(app) {
+    const escapeAttr = (value) => String(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
     return {
         menu() {
             let curr = new Date();
@@ -16,7 +18,7 @@ export function createComponents(app) {
                         <div class="truncate ${m.c ? 'text-gray-900 font-bold' : 'text-gray-300'}">☀️ ${m.c || '---'}</div>
                         <div class="truncate ${m.d ? 'text-gray-900 font-bold' : 'text-gray-300'}">🌙 ${m.d || '---'}</div>
                     </div>
-                    <button onclick="FamilyApp.ui.openMenuModal('${ds}')" class="text-gray-300 material-symbols-outlined">edit_square</button>
+                    <button data-action="open-menu-modal" data-date="${ds}" class="text-gray-300 material-symbols-outlined">edit_square</button>
                 </div>`;
             }
             document.getElementById('menu').innerHTML = `<h2 class="text-2xl font-bold mb-6">Menú Semanal</h2>${weekHtml}<div class="bg-white rounded-[2.5rem] p-6 mt-8 border"><div class="calendar-grid" id="gridMenu"></div></div>`;
@@ -39,21 +41,21 @@ export function createComponents(app) {
                 else grouped['Otros'].items.push(i);
             });
 
-            let html = `<h2 class="text-2xl font-bold mb-6">Compra</h2><div class="flex gap-2 mb-8"><input type="text" id="shopMain" placeholder="Añadir..." class="flex-grow rounded-2xl border-none shadow-sm p-4 text-sm bg-white"><button onclick="FamilyApp.actions.addItem('shopMain')" class="bg-primary text-white rounded-2xl w-14 flex items-center justify-center material-symbols-outlined">add</button></div>`;
+            let html = `<h2 class="text-2xl font-bold mb-6">Compra</h2><div class="flex gap-2 mb-8"><input type="text" id="shopMain" placeholder="Añadir..." class="flex-grow rounded-2xl border-none shadow-sm p-4 text-sm bg-white"><button data-action="add-item" data-input-id="shopMain" class="bg-primary text-white rounded-2xl w-14 flex items-center justify-center material-symbols-outlined">add</button></div>`;
 
             Object.values(grouped).forEach(g => {
                 if (g.items.length > 0) {
                     html += `<div class="mb-6"><h3 class="text-[10px] font-black uppercase text-primary mb-3 ml-2 flex items-center gap-2"><span class="material-symbols-outlined text-sm">${g.meta.icon}</span> ${g.meta.name}</h3><div class="space-y-2">`;
                     html += g.items.map(i => `<div class="bg-white p-3 rounded-2xl flex items-center justify-between border shadow-sm">
-                        <div onclick="FamilyApp.actions.toggleShop('${i.id}')" class="flex items-center gap-3 flex-grow"><span class="material-symbols-outlined text-gray-200">circle</span><span class="text-sm text-gray-700">${i.name}</span></div>
-                        <button onclick="FamilyApp.ui.openCategoryModal('${i.id}', '${i.name.replace(/'/g, "")}')" class="text-gray-300 material-symbols-outlined text-lg">label</button>
+                        <div data-action="toggle-shop" data-id="${i.id}" class="flex items-center gap-3 flex-grow"><span class="material-symbols-outlined text-gray-200">circle</span><span class="text-sm text-gray-700">${i.name}</span></div>
+                        <button data-action="open-category-modal" data-id="${i.id}" data-name="${escapeAttr(i.name)}" class="text-gray-300 material-symbols-outlined text-lg">label</button>
                     </div>`).join('');
                     html += `</div></div>`;
                 }
             });
 
             if (done.length > 0) {
-                html += `<div class="mt-10 pt-6 border-t opacity-50"><button onclick="FamilyApp.actions.clearDone()" class="text-[10px] text-red-400 font-bold mb-4">LIMPIAR COMPRADOS</button>${done.map(i => `<div onclick="FamilyApp.actions.toggleShop('${i.id}')" class="flex items-center gap-3 p-2 text-sm line-through text-gray-400"><span class="material-symbols-outlined text-success">check_circle</span>${i.name}</div>`).join('')}</div>`;
+                html += `<div class="mt-10 pt-6 border-t opacity-50"><button data-action="clear-done" class="text-[10px] text-red-400 font-bold mb-4">LIMPIAR COMPRADOS</button>${done.map(i => `<div data-action="toggle-shop" data-id="${i.id}" class="flex items-center gap-3 p-2 text-sm line-through text-gray-400"><span class="material-symbols-outlined text-success">check_circle</span>${i.name}</div>`).join('')}</div>`;
             }
             document.getElementById('compra').innerHTML = html;
         },
@@ -72,13 +74,13 @@ export function createComponents(app) {
                 else grouped['Sin Sección'].items.push(r);
             });
 
-            let html = `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Libro</h2><button onclick="FamilyApp.ui.openRecipeModal()" class="bg-primary text-white size-10 rounded-full flex items-center justify-center material-symbols-outlined shadow-lg">add</button></div>
-            <div class="mb-6 relative"><input type="text" id="libSearch" value="${query}" oninput="FamilyApp.render()" placeholder="Buscar..." class="w-full rounded-2xl border-none p-4 pl-12 text-sm bg-white shadow-sm"><span class="material-symbols-outlined absolute left-4 top-4 text-gray-300">search</span></div>`;
+            let html = `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Libro</h2><button data-action="open-recipe-modal" class="bg-primary text-white size-10 rounded-full flex items-center justify-center material-symbols-outlined shadow-lg">add</button></div>
+            <div class="mb-6 relative"><input type="text" id="libSearch" value="${query}" data-action="search-library" placeholder="Buscar..." class="w-full rounded-2xl border-none p-4 pl-12 text-sm bg-white shadow-sm"><span class="material-symbols-outlined absolute left-4 top-4 text-gray-300">search</span></div>`;
 
             Object.values(grouped).forEach(g => {
                 if (g.items.length > 0) {
                     html += `<div class="mb-4"><h3 class="text-[10px] font-bold uppercase text-primary mb-2 ml-2 flex items-center gap-2"><span class="material-symbols-outlined text-sm">${g.meta.icon}</span> ${g.meta.name}</h3><div class="space-y-2">`;
-                    html += g.items.map(r => `<div onclick="FamilyApp.ui.openRecipeModal('${r.id}')" class="bg-white p-4 rounded-3xl border shadow-sm flex justify-between items-center cursor-pointer"><div><p class="font-bold text-sm">${r.name}</p></div><span class="material-symbols-outlined text-gray-200">chevron_right</span></div>`).join('');
+                    html += g.items.map(r => `<div data-action="open-recipe-modal" data-id="${r.id}" class="bg-white p-4 rounded-3xl border shadow-sm flex justify-between items-center cursor-pointer"><div><p class="font-bold text-sm">${r.name}</p></div><span class="material-symbols-outlined text-gray-200">chevron_right</span></div>`).join('');
                     html += `</div></div>`;
                 }
             });
@@ -90,10 +92,10 @@ export function createComponents(app) {
             const renderCatList = (type, list) => list.map(cat => `
                 <div class="flex items-center justify-between bg-white p-3 rounded-xl border mb-2 text-xs">
                     <div class="flex items-center gap-3">
-                        <button onclick="FamilyApp.actions.editCategoryIcon('${type}', '${cat.id}')" class="size-8 bg-gray-50 rounded-full flex items-center justify-center border"><span class="material-symbols-outlined text-sm text-primary">${cat.icon}</span></button>
+                        <button data-action="edit-category-icon" data-type="${type}" data-id="${cat.id}" class="size-8 bg-gray-50 rounded-full flex items-center justify-center border"><span class="material-symbols-outlined text-sm text-primary">${cat.icon}</span></button>
                         <span class="font-bold">${cat.name}</span>
                     </div>
-                    <button onclick="FamilyApp.actions.deleteCategory('${type}', '${cat.id}')" class="text-red-300 material-symbols-outlined text-base">delete</button>
+                    <button data-action="delete-category" data-type="${type}" data-id="${cat.id}" class="text-red-300 material-symbols-outlined text-base">delete</button>
                 </div>
             `).join('');
 
@@ -113,7 +115,7 @@ export function createComponents(app) {
                     <div class="bg-white p-5 rounded-[2rem] border shadow-sm">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-xs font-bold uppercase text-gray-400 tracking-widest">🛒 Categorías Compra</h3>
-                            <button onclick="FamilyApp.actions.addCategory('shop')" class="text-primary text-xs font-bold">+ AÑADIR</button>
+                            <button data-action="add-category" data-type="shop" class="text-primary text-xs font-bold">+ AÑADIR</button>
                         </div>
                         <div class="max-h-48 overflow-y-auto">${renderCatList('shop', c.categories.shop)}</div>
                     </div>
@@ -121,7 +123,7 @@ export function createComponents(app) {
                     <div class="bg-white p-5 rounded-[2rem] border shadow-sm">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-xs font-bold uppercase text-gray-400 tracking-widest">📖 Categorías Libro</h3>
-                            <button onclick="FamilyApp.actions.addCategory('recipe')" class="text-primary text-xs font-bold">+ AÑADIR</button>
+                            <button data-action="add-category" data-type="recipe" class="text-primary text-xs font-bold">+ AÑADIR</button>
                         </div>
                         <div class="max-h-48 overflow-y-auto">${renderCatList('recipe', c.categories.recipe)}</div>
                     </div>
@@ -142,7 +144,7 @@ export function createComponents(app) {
                         <h3 class="text-xs font-bold uppercase text-gray-400 mb-4 tracking-widest">🔐 Sistema</h3>
                         <label class="text-[9px] font-bold">API KEY (Groq)</label>
                         <input type="password" id="cfgApiKey" value="${app.aiKey || ''}" class="w-full rounded-xl bg-gray-50 border-none mt-1 text-xs mb-4">
-                        <button onclick="FamilyApp.actions.saveConfig()" class="w-full bg-[#101618] text-white py-4 rounded-xl font-bold uppercase text-xs">💾 Guardar Configuración</button>
+                        <button data-action="save-config" class="w-full bg-[#101618] text-white py-4 rounded-xl font-bold uppercase text-xs">💾 Guardar Configuración</button>
                     </div>
                 </div>
             `;

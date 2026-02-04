@@ -1,6 +1,4 @@
-import { set } from '../services/firebase.js';
-
-export function createActions(app, { aiKeyRef }) {
+export function createActions(app, { firebase }) {
     return {
         confirmSaveAiRecipe(name) {
             const recipe = window._currentAiRecipe;
@@ -39,15 +37,12 @@ export function createActions(app, { aiKeyRef }) {
             const adults = document.getElementById('cfgAdults').value;
             const kids = document.getElementById('cfgKids').value;
             const notes = document.getElementById('cfgNotes').value;
-            const promptMenu = document.getElementById('cfgPromptMenu').value;
-            const promptRecipe = document.getElementById('cfgPromptRecipe').value;
             const apiKey = document.getElementById('cfgApiKey').value;
 
             app.state.config.family = { adults, kids, notes };
-            app.state.config.prompts = { menu: promptMenu, recipe: promptRecipe };
 
             if (apiKey && apiKey !== app.aiKey) {
-                set(aiKeyRef, apiKey);
+                firebase.saveAiKey(apiKey);
                 app.aiKey = apiKey;
             }
 

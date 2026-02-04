@@ -7,6 +7,7 @@ import { createComponents } from './components/index.js';
 import { createUi } from './ui/index.js';
 import { createCalendarUi } from './ui/calendar.js';
 import { createShoppingUi } from './ui/shopping.js';
+import { createRecipesUi } from './ui/recipes.js';
 import { getState, setState } from './state/store.js';
 
 const { cloudRef, pinRef, aiKeyRef } = initFirebase();
@@ -55,7 +56,7 @@ const FamilyApp = {
         const active = document.querySelector('.tab-content.active')?.id;
         if (active === 'menu') this.components.menu();
         if (active === 'compra') this.shoppingUi.render();
-        if (active === 'biblioteca') this.components.biblioteca();
+        if (active === 'biblioteca') this.recipesUi.render();
         if (active === 'config') this.components.config();
     }
 };
@@ -67,6 +68,7 @@ FamilyApp.components = createComponents(FamilyApp);
 FamilyApp.ui = createUi(FamilyApp);
 FamilyApp.calendarUi = createCalendarUi(FamilyApp);
 FamilyApp.shoppingUi = createShoppingUi(FamilyApp);
+FamilyApp.recipesUi = createRecipesUi(FamilyApp);
 
 const tabRouter = createTabRouter(FamilyApp);
 
@@ -82,6 +84,9 @@ function handleActionClick(event) {
         return;
     }
     if (FamilyApp.calendarUi?.handleAction(actionEl)) {
+        return;
+    }
+    if (FamilyApp.recipesUi?.handleAction(actionEl)) {
         return;
     }
     if (action === 'reload') {
@@ -122,10 +127,6 @@ function handleActionClick(event) {
         FamilyApp.actions.saveRecipeManual();
         return;
     }
-    if (action === 'open-recipe-modal') {
-        FamilyApp.ui.openRecipeModal(actionEl.dataset.id || null);
-        return;
-    }
     if (action === 'save-icon') {
         FamilyApp.actions.saveIcon(actionEl.dataset.type, actionEl.dataset.id, actionEl.dataset.icon);
         return;
@@ -159,8 +160,8 @@ function handleActionInput(event) {
     const actionEl = event.target.closest('[data-action]');
     if (!actionEl) return;
 
-    if (actionEl.dataset.action === 'search-library') {
-        FamilyApp.render();
+    if (FamilyApp.recipesUi?.handleInput(actionEl)) {
+        return;
     }
 }
 

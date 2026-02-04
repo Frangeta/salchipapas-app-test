@@ -1,5 +1,3 @@
-import { DEFAULT_CONFIG } from '../constants/defaultConfig.js';
-
 export function createUi(app) {
     const escapeAttr = (value) => String(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
@@ -13,31 +11,6 @@ export function createUi(app) {
                 document.getElementById('planner').innerHTML = `<h2 class="text-2xl font-bold mb-6">IA Planner</h2><button data-action="ai-generate-menu" class="bg-primary text-white w-full py-4 rounded-3xl font-bold shadow-lg">✨ Generar Menú Semanal</button><div id="plannerResults" class="mt-8 pb-20"></div>`;
             }
             app.render();
-        },
-        openRecipeModal(id = null) {
-            const r = id ? app.state.library.find(x => x.id == id) : {name:'', section:'Sin Sección', ing:'', steps:''};
-
-            const cats = app.state.config.categories.recipe || DEFAULT_CONFIG.categories.recipe;
-            const catOptions = cats.map(c =>
-                `<option ${r.section === c.name ? 'selected' : ''}>${c.name}</option>`
-            ).join('');
-
-            app.ui.openModal(`
-                <div class="flex justify-between items-center mb-6"><h3 class="font-bold text-primary text-[10px] uppercase">${id ? 'Editar' : 'Nueva'}</h3><div class="flex gap-4">
-                <button data-action="ai-propose-recipe" data-source-id="libName" class="material-symbols-outlined text-primary">auto_awesome</button>
-                ${id ? `<button data-action="delete-recipe" data-id="${id}" class="material-symbols-outlined text-red-400">delete</button>` : ''}</div></div>
-                <input type="hidden" id="libId" value="${id || ''}">
-                <div class="space-y-4">
-                    <input type="text" id="libName" value="${r.name || ''}" placeholder="Nombre" class="w-full rounded-2xl border-none bg-gray-50 p-4 font-bold text-sm">
-                    <select id="libSec" class="w-full rounded-2xl border-none bg-gray-50 p-4 text-xs">
-                        ${catOptions}
-                        <option>Sin Sección</option>
-                    </select>
-                    <textarea id="libIng" placeholder="Ingredientes" class="w-full rounded-2xl border-none bg-gray-50 p-4 text-xs h-32 leading-relaxed">${app.ai.cleanText(r.ing)}</textarea>
-                    <textarea id="libSteps" placeholder="Preparación" class="w-full rounded-2xl border-none bg-gray-50 p-4 text-xs h-32 leading-relaxed">${app.ai.cleanText(r.steps)}</textarea>
-                </div>
-                <button data-action="save-recipe-manual" class="w-full bg-[#101618] text-white py-4 rounded-2xl font-bold uppercase text-[10px] mt-6">Guardar Libro</button>
-            `);
         },
         openMenuModal(ds) {
             const m = app.state.menu[ds] || {c:'', d:''};

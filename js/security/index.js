@@ -1,9 +1,9 @@
-export function createSecurity(app, pinRef, { set }) {
+export function createSecurity(app, firebase) {
     return {
         checkPin() {
             const val = document.getElementById('pinInput').value;
             if (!app.remotePin && val) {
-                set(pinRef, val);
+                firebase.savePin(val);
                 app.remotePin = val;
             }
             if (val === app.remotePin) {

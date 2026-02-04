@@ -47,18 +47,6 @@ export function createComponents(app) {
                         <div class="max-h-48 overflow-y-auto">${renderCatList('recipe', c.categories.recipe)}</div>
                     </div>
 
-                    <div class="bg-white p-5 rounded-[2rem] border shadow-sm">
-                        <h3 class="text-xs font-bold uppercase text-gray-400 mb-4 tracking-widest">🤖 Personalización IA</h3>
-                        <div class="mb-4">
-                            <label class="text-[9px] font-bold">PROMPT MENÚ</label>
-                            <textarea id="cfgPromptMenu" class="w-full rounded-xl bg-gray-50 border-none mt-1 text-[10px] h-20">${c.prompts.menu}</textarea>
-                        </div>
-                        <div>
-                            <label class="text-[9px] font-bold">PROMPT RECETA</label>
-                            <textarea id="cfgPromptRecipe" class="w-full rounded-xl bg-gray-50 border-none mt-1 text-[10px] h-20">${c.prompts.recipe}</textarea>
-                        </div>
-                    </div>
-
                      <div class="bg-white p-5 rounded-[2rem] border shadow-sm">
                         <h3 class="text-xs font-bold uppercase text-gray-400 mb-4 tracking-widest">🔐 Sistema</h3>
                         <label class="text-[9px] font-bold">API KEY (Groq)</label>

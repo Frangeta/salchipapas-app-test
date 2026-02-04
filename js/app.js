@@ -1,4 +1,4 @@
-import { initFirebase, onValue, get, set } from './services/firebase.js';
+import { createFirebaseService } from './services/firebase.js';
 import { ensureConfigIntegrity } from './state/config.js';
 import { createSecurity } from './security/index.js';
 import { createAi } from './services/ai.js';
@@ -10,7 +10,7 @@ import { createShoppingUi } from './ui/shopping.js';
 import { createRecipesUi } from './ui/recipes.js';
 import { getState, setState } from './state/store.js';
 
-const { cloudRef, pinRef, aiKeyRef } = initFirebase();
+const firebase = createFirebaseService();
 
 const FamilyApp = {
     state: getState(),
@@ -20,10 +20,9 @@ const FamilyApp = {
 
     async init() {
         try {
-            const snapPin = await get(pinRef);
-            const snapKey = await get(aiKeyRef);
-            if (snapPin.exists()) this.remotePin = snapPin.val();
-            if (snapKey.exists()) this.aiKey = snapKey.val();
+            const { pin, aiKey } = await firebase.loadInitial();
+            if (pin) this.remotePin = pin;
+            if (aiKey) this.aiKey = aiKey;
 
             const elMsg = document.getElementById('lockMsg');
             const elPin = document.getElementById('pinInput');
@@ -34,7 +33,7 @@ const FamilyApp = {
 
             if (sessionStorage.getItem('unlocked') === 'true') this.security.unlock();
 
-            onValue(cloudRef, (snapshot) => {
+            firebase.subscribe((snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     setState(data);
@@ -51,7 +50,7 @@ const FamilyApp = {
         } catch (e) { console.error("Error Init:", e); }
     },
 
-    save() { set(cloudRef, this.state); },
+    save() { firebase.saveState(this.state); },
     render() {
         const active = document.querySelector('.tab-content.active')?.id;
         if (active === 'menu') this.components.menu();
@@ -61,9 +60,9 @@ const FamilyApp = {
     }
 };
 
-FamilyApp.security = createSecurity(FamilyApp, pinRef, { set });
+FamilyApp.security = createSecurity(FamilyApp, firebase);
 FamilyApp.ai = createAi(FamilyApp);
-FamilyApp.actions = createActions(FamilyApp, { aiKeyRef });
+FamilyApp.actions = createActions(FamilyApp, { firebase });
 FamilyApp.components = createComponents(FamilyApp);
 FamilyApp.ui = createUi(FamilyApp);
 FamilyApp.calendarUi = createCalendarUi(FamilyApp);

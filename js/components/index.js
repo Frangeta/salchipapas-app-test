@@ -5,33 +5,6 @@ export function createComponents(app) {
         menu() {
             app.calendarUi.renderMenuTab();
         },
-        biblioteca() {
-            const query = (document.getElementById('libSearch')?.value || '').toLowerCase();
-            const recipes = (app.state.library || []).filter(r => r.name.toLowerCase().includes(query));
-
-            const catsConfig = app.state.config.categories.recipe || DEFAULT_CONFIG.categories.recipe;
-            const grouped = {};
-            catsConfig.forEach(c => grouped[c.name] = { meta: c, items: [] });
-            grouped['Sin Sección'] = { meta: {name:'Sin Sección', icon:'menu_book'}, items: [] };
-
-            recipes.forEach(r => {
-                const sec = r.section || 'Sin Sección';
-                if (grouped[sec]) grouped[sec].items.push(r);
-                else grouped['Sin Sección'].items.push(r);
-            });
-
-            let html = `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Libro</h2><button data-action="open-recipe-modal" class="bg-primary text-white size-10 rounded-full flex items-center justify-center material-symbols-outlined shadow-lg">add</button></div>
-            <div class="mb-6 relative"><input type="text" id="libSearch" value="${query}" data-action="search-library" placeholder="Buscar..." class="w-full rounded-2xl border-none p-4 pl-12 text-sm bg-white shadow-sm"><span class="material-symbols-outlined absolute left-4 top-4 text-gray-300">search</span></div>`;
-
-            Object.values(grouped).forEach(g => {
-                if (g.items.length > 0) {
-                    html += `<div class="mb-4"><h3 class="text-[10px] font-bold uppercase text-primary mb-2 ml-2 flex items-center gap-2"><span class="material-symbols-outlined text-sm">${g.meta.icon}</span> ${g.meta.name}</h3><div class="space-y-2">`;
-                    html += g.items.map(r => `<div data-action="open-recipe-modal" data-id="${r.id}" class="bg-white p-4 rounded-3xl border shadow-sm flex justify-between items-center cursor-pointer"><div><p class="font-bold text-sm">${r.name}</p></div><span class="material-symbols-outlined text-gray-200">chevron_right</span></div>`).join('');
-                    html += `</div></div>`;
-                }
-            });
-            document.getElementById('biblioteca').innerHTML = html;
-        },
         config() {
             const c = app.state.config || DEFAULT_CONFIG;
 

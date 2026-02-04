@@ -5,6 +5,7 @@ import { createAi } from './services/ai.js';
 import { createActions } from './actions/index.js';
 import { createComponents } from './components/index.js';
 import { createUi } from './ui/index.js';
+import { createShoppingUi } from './ui/shopping.js';
 import { getState, setState } from './state/store.js';
 
 const { cloudRef, pinRef, aiKeyRef } = initFirebase();
@@ -52,7 +53,7 @@ const FamilyApp = {
     render() {
         const active = document.querySelector('.tab-content.active')?.id;
         if (active === 'menu') this.components.menu();
-        if (active === 'compra') this.components.compra();
+        if (active === 'compra') this.shoppingUi.render();
         if (active === 'biblioteca') this.components.biblioteca();
         if (active === 'config') this.components.config();
     }
@@ -63,6 +64,7 @@ FamilyApp.ai = createAi(FamilyApp);
 FamilyApp.actions = createActions(FamilyApp, { aiKeyRef });
 FamilyApp.components = createComponents(FamilyApp);
 FamilyApp.ui = createUi(FamilyApp);
+FamilyApp.shoppingUi = createShoppingUi(FamilyApp);
 
 const tabRouter = createTabRouter(FamilyApp);
 
@@ -74,6 +76,9 @@ function handleActionClick(event) {
 
     const { action, tab } = actionEl.dataset;
 
+    if (FamilyApp.shoppingUi?.handleAction(actionEl)) {
+        return;
+    }
     if (action === 'reload') {
         location.reload();
         return;
@@ -116,17 +121,6 @@ function handleActionClick(event) {
         FamilyApp.ui.openRecipeModal(actionEl.dataset.id || null);
         return;
     }
-    if (action === 'add-item') {
-        const inputId = actionEl.dataset.inputId;
-        const isManual = actionEl.dataset.manual === 'true';
-        if (isManual) {
-            const value = inputId ? document.getElementById(inputId)?.value : '';
-            FamilyApp.actions.addItem(null, value?.trim(), actionEl);
-        } else {
-            FamilyApp.actions.addItem(inputId);
-        }
-        return;
-    }
     if (action === 'update-menu') {
         const date = actionEl.dataset.date;
         FamilyApp.state.menu[date] = {
@@ -135,10 +129,6 @@ function handleActionClick(event) {
         };
         FamilyApp.save();
         FamilyApp.ui.closeModal();
-        return;
-    }
-    if (action === 'learn-category') {
-        FamilyApp.actions.learnCategory(actionEl.dataset.itemId, actionEl.dataset.category);
         return;
     }
     if (action === 'open-menu-modal') {
@@ -155,18 +145,6 @@ function handleActionClick(event) {
     }
     if (action === 'confirm-save-ai-recipe') {
         FamilyApp.actions.confirmSaveAiRecipe(actionEl.dataset.name);
-        return;
-    }
-    if (action === 'toggle-shop') {
-        FamilyApp.actions.toggleShop(actionEl.dataset.id);
-        return;
-    }
-    if (action === 'open-category-modal') {
-        FamilyApp.ui.openCategoryModal(actionEl.dataset.id, actionEl.dataset.name);
-        return;
-    }
-    if (action === 'clear-done') {
-        FamilyApp.actions.clearDone();
         return;
     }
     if (action === 'edit-category-icon') {

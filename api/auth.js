@@ -2,29 +2,22 @@ const crypto = require('crypto');
 
 const TOKEN_TTL_MS = 15 * 60 * 1000;
 
-// 🔹 Generar secret
 function getSecret() {
   return process.env.AUTH_TOKEN_SECRET || 'dev-token-secret-change-me';
 }
 
-// 🔹 Firmar payload
 function sign(payloadBase64) {
   return crypto.createHmac('sha256', getSecret())
     .update(payloadBase64)
     .digest('base64url');
 }
 
-// 🔹 Crear token
 function createToken() {
   const expiresAt = Date.now() + TOKEN_TTL_MS;
   const payloadBase64 = Buffer.from(JSON.stringify({ expiresAt }), 'utf-8').toString('base64url');
-  return {
-    token: `${payloadBase64}.${sign(payloadBase64)}`,
-    expiresAt
-  };
+  return { token: `${payloadBase64}.${sign(payloadBase64)}`, expiresAt };
 }
 
-// 🔹 Validar token
 function isValidToken(token) {
   if (!token || !token.includes('.')) return false;
   const [payloadBase64, signature] = token.split('.');
@@ -38,10 +31,8 @@ function isValidToken(token) {
   }
 }
 
-// 🔹 Wrapper para endpoints que requieren autenticación
 function requireAuth(handler) {
   return async (req, res) => {
-    // Leer token de Authorization
     const authHeader = req.headers.authorization || '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
@@ -49,22 +40,13 @@ function requireAuth(handler) {
       return res.status(401).json({ error: 'Token inválido o faltante' });
     }
 
-    // Adjuntar info del usuario al request
-    req.user = { sub: 'user' }; // opcionalmente podrías decodificar info real del token
-
+    req.user = { sub: 'user' }; // puedes cambiar según tu lógica
     return handler(req, res);
   };
 }
 
-// 🔹 Función helper para errores JSON
 function sendError(res, status = 500, code = 'SERVER_ERROR', message = 'Error interno') {
   return res.status(status).json({ error: { code, message } });
 }
 
-module.exports = {
-  createToken,
-  isValidToken,
-  signToken: createToken,
-  requireAuth,
-  sendError
-};
+module.exports = { createToken, isValidToken, signToken: createToken, requireAuth, sendError };

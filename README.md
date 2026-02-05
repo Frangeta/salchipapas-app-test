@@ -16,6 +16,21 @@ Aplicación web estática para la gestión familiar, con foco en planificación 
 └── README.md
 ```
 
+## Autenticación temporal
+- El acceso ya no usa PIN en el frontend.
+- El frontend solicita un **token temporal** al endpoint `POST /api/auth`.
+- El backend valida una clave de acceso (`AUTH_ACCESS_CODE`) y emite tokens firmados con `AUTH_TOKEN_SECRET` (TTL 15 min).
+
+### Variables de entorno necesarias
+- `AUTH_ACCESS_CODE`: clave requerida para solicitar token.
+- `AUTH_TOKEN_SECRET`: secreto para firmar y validar tokens.
+
+### ¿Cómo solicito el acceso?
+1. El administrador te comparte la clave configurada en `AUTH_ACCESS_CODE`.
+2. En la pantalla inicial, escribe esa clave en **Clave de acceso**.
+3. Presiona **Solicitar acceso** (o Enter).
+4. Si la clave es correcta, el backend devuelve un token temporal (15 min) y la app se desbloquea.
+
 ## Cómo ejecutar
 Puedes abrir `index.html` directamente en tu navegador o levantar un servidor estático local:
 

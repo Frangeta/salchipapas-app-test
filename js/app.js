@@ -194,3 +194,11 @@ window.addEventListener('load', () => {
 
 document.addEventListener('click', handleActionClick);
 document.addEventListener('input', handleActionInput);
+document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.id === 'accessCodeInput') {
+        FamilyApp.auth.requestToken();
+    }
+});

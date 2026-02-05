@@ -4,6 +4,7 @@ const { requireAuth, sendError } = require('../lib/auth');
 const SYSTEM_PROMPT = 'Devuelve SOLO JSON válido con esta forma: {"comidas":[{"dia":"Lunes","plato":"..."}],"cenas":[{"dia":"Lunes","plato":"..."}]}. Deben ser exactamente 7 comidas y 7 cenas.';
 
 module.exports = requireAuth(async (req, res) => {
+  // Solo POST
   if (req.method !== 'POST') {
     return sendError(res, 405, 'METHOD_NOT_ALLOWED', 'Solo POST');
   }
@@ -36,8 +37,10 @@ module.exports = requireAuth(async (req, res) => {
       return sendError(res, 500, 'SERVER_ERROR', 'Respuesta IA inválida');
     }
 
+    // Respuesta JSON limpia
     return res.status(200).json({ ok: true, data: parsed });
-  } catch (_error) {
+  } catch (err) {
+    console.error(err);
     return sendError(res, 500, 'SERVER_ERROR', 'Error interno');
   }
 });

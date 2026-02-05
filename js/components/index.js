@@ -49,11 +49,7 @@ export function createComponents(app) {
 
                      <div class="bg-white p-5 rounded-[2rem] border shadow-sm">
                         <h3 class="text-xs font-bold uppercase text-gray-400 mb-4 tracking-widest">🔐 Sistema</h3>
-                        <label class="text-[9px] font-bold">API KEY (Groq)</label>
-                        <input type="password" id="cfgApiKey" value="${app.aiKey || ''}" class="w-full rounded-xl bg-gray-50 border-none mt-1 text-xs mb-4">
-                        <label class="text-[9px] font-bold">CLAVE DE ACCESO (opcional para crear/cambiar)</label>
-                        <input type="password" id="cfgAccessCode" placeholder="Nueva clave" class="w-full rounded-xl bg-gray-50 border-none mt-1 text-xs mb-4">
-                        <p class="text-[10px] text-gray-400 mb-4">Se guarda en Firebase como hash SHA-256 (no en texto plano).</p>
+                        <p class="text-[10px] text-gray-500 mb-4">La autenticación y claves IA viven en el backend. Este frontend no almacena secretos.</p>
                         <button data-action="save-config" class="w-full bg-[#101618] text-white py-4 rounded-xl font-bold uppercase text-xs">💾 Guardar Configuración</button>
                     </div>
                 </div>

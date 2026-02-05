@@ -49,12 +49,12 @@ export function createCalendarUi(app) {
         drawCalendar('gridMenu');
     };
 
-    const updateMenu = (dateStamp) => {
+    const updateMenu = async (dateStamp) => {
         app.state.menu[dateStamp] = {
             c: document.getElementById('mC')?.value || '',
             d: document.getElementById('mD')?.value || ''
         };
-        app.save();
+        await app.api.saveCalendar(app.state.menu);
         app.ui.closeModal();
     };
 

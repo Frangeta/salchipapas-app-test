@@ -1,14 +1,15 @@
 const SESSION_KEY = 'salchipapas_session';
 
 function getConfiguredBaseUrl() {
-  return window.SALCHIPAPAS_API_URL || 'http://localhost:3000';
+  // Si estás en local para desarrollo, usa localhost; en Vercel usa mismo origen
+  return window.SALCHIPAPAS_API_URL || ''; // <-- vacío = mismo origen
 }
 
 function buildNetworkError(baseUrl) {
   return [
     'No se pudo conectar con la API.',
-    `URL actual: ${baseUrl}`,
-    'Revisa que la URL exista, que Vercel esté desplegado y que CORS_ORIGIN incluya el dominio de GitHub Pages.'
+    `URL actual: ${baseUrl || window.location.origin}`,
+    'Revisa que la URL exista y que la app esté desplegada correctamente.'
   ].join(' ');
 }
 
@@ -42,6 +43,7 @@ export function createApiService(app) {
 
     let response;
     try {
+      // 🚀 Ruta relativa
       response = await fetch(`${baseUrl}${path}`, {
         method,
         headers,
@@ -60,7 +62,7 @@ export function createApiService(app) {
       throw error;
     }
 
-    return payload.data;
+    return payload;
   };
 
   return {

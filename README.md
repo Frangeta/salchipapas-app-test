@@ -1,59 +1,91 @@
-# Salchipapas App
+# Salchipapas Frontend (GitHub Pages)
 
-Aplicación web estática para la gestión familiar, con foco en planificación de menús semanales, lista de compras y recetas.
+Frontend estático de Salchipapas. Esta versión no contiene secretos y consume una API externa con JWT.
 
-## Características
-- Planificación de menú semanal.
-- Lista de compras con categorización por sección.
-- Base para futuras funcionalidades de IA (menú semanal y recetas).
+## Configuración de API
 
-## Estructura del proyecto
-```
-.
-├── index.html
-├── css/
-├── js/
-└── README.md
+Define la URL del backend antes de cargar `js/main.js`:
+
+```html
+<script>
+  window.SALCHIPAPAS_API_URL = "https://TU-PROYECTO.vercel.app";
+</script>
 ```
 
-## Acceso con clave en Firebase (sin backend extra)
-- La app usa una clave de acceso administrada desde Firebase.
-- La clave **no se guarda en texto plano**: se transforma a hash SHA-256 antes de guardarse en `family_v9/config/accessCodeHash`.
-- El usuario escribe su clave en la pantalla de bloqueo y la app compara hashes para permitir el acceso.
+Si no se define, el cliente usa `http://localhost:3000`.
 
-### ¿Cómo crear o cambiar la clave?
-1. Entra a la pestaña **Config**.
-2. En **Sistema**, escribe una nueva clave en **CLAVE DE ACCESO**.
-3. Presiona **Guardar Configuración**.
-4. Comparte esa clave con los usuarios.
+## Flujo de autenticación
 
-### ¿Qué se guarda en Firebase?
-- `family_v9/config/accessCodeHash`: hash SHA-256 de la clave.
-- `family_v9/config/aiApiKey`: API key de IA (si aplica).
+1. Login en pantalla de bloqueo (`username` + `password`).
+2. `POST /api/login`.
+3. Guardado del token en `sessionStorage` (no `localStorage`).
+4. Todas las llamadas protegidas incluyen `Authorization: Bearer <token>`.
 
-## Cómo ejecutar
-Puedes abrir `index.html` directamente en tu navegador o levantar un servidor estático local:
+## Endpoints usados por frontend
 
-```bash
-python3 -m http.server 8000
+- `POST /api/login`
+- `GET/POST /api/calendar`
+- `GET/POST /api/pantry`
+- `POST /api/ai-recipes`
+
+## Nuevo backend (repo separado)
+
+Este proyecto incluye una carpeta de referencia `salchipapas-api/` para copiar a un repo dedicado.
+
+### Estructura
+
+```txt
+salchipapas-api/
+  api/
+    login.js
+    ai-recipes.js
+    calendar.js
+    pantry.js
+  lib/
+    auth.js
+    db.js
+  package.json
+  vercel.json
 ```
-Luego visita `http://localhost:8000`.
 
-## Roadmap
-- **V1.0**
-  - Menú semanal.
-  - Lista de compras con categorización por sección.
-- **V2.0**
-  - Menú semanal con IA.
-  - Recetas con IA.
-  - Libro de recetas.
-- **V3.0**
-  - Refactor general.
+### Variables de entorno en Vercel
 
-## Contribución
-1. Crea una rama.
-2. Realiza tus cambios.
-3. Abre un PR con una descripción clara.
+- `JWT_SECRET`
+- `JWT_EXPIRES_IN` (ej. `2h`)
+- `AUTH_USERNAME`
+- `AUTH_PASSWORD`
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL` (opcional)
+- `CORS_ORIGIN` (opcional, recomendado)
 
-## Licencia
-Pendiente de definir.
+`CORS_ORIGIN` acepta una o varias URLs separadas por coma, por ejemplo:
+
+```txt
+https://frangeta.github.io,http://localhost:8000,http://127.0.0.1:8000
+```
+
+Si no configuras `CORS_ORIGIN`, la API reflejará el origin solicitante para facilitar desarrollo.
+
+### Deploy rápido
+
+1. Crear repo `salchipapas-api` y subir carpeta `salchipapas-api/*`.
+2. Importar repo en Vercel.
+3. Configurar variables de entorno.
+4. Deploy.
+5. Copiar URL final y asignarla a `window.SALCHIPAPAS_API_URL` en frontend.
+
+## Solución al error CORS (`Solicitud CORS sin éxito`, status null)
+
+1. Verifica que `window.SALCHIPAPAS_API_URL` apunte a una URL válida y desplegada.
+2. Revisa en Vercel que la función `/api/login` responda directamente.
+3. Configura `CORS_ORIGIN` con tu dominio GitHub Pages exacto.
+4. Haz redeploy tras cambiar variables de entorno.
+
+## Checklist post-deploy
+
+- [ ] `POST /api/login` retorna token JWT.
+- [ ] `GET /api/calendar` sin token retorna 401.
+- [ ] `GET /api/calendar` con token retorna 200.
+- [ ] `POST /api/pantry` persiste items.
+- [ ] `POST /api/ai-recipes` devuelve 7 comidas y 7 cenas.
+- [ ] Frontend carga sin exponer secretos en código.

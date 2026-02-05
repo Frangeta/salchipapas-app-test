@@ -6,7 +6,7 @@ export function createShoppingUi(app) {
 
     const getShoppingState = () => getState();
 
-    const addItem = (inputId, manualValue = null, btn = null) => {
+    const addItem = async (inputId, manualValue = null, btn = null) => {
         const el = inputId ? document.getElementById(inputId) : null;
         const val = manualValue || (el ? el.value.trim() : '');
         if (!val) return;
@@ -28,16 +28,16 @@ export function createShoppingUi(app) {
 
         if (manualValue && btn) { btn.innerText = 'done'; btn.classList.add('bg-success', 'text-white'); }
         if (!manualValue && el) el.value = '';
-        app.save();
+        await app.api.savePantry(state.shopping);
     };
 
-    const toggleShop = (id) => {
+    const toggleShop = async (id) => {
         const state = getShoppingState();
         const item = state.shopping.find(i => i.id == id);
-        if (item) { item.checked = !item.checked; app.save(); }
+        if (item) { item.checked = !item.checked; await app.api.savePantry(state.shopping); }
     };
 
-    const learnCategory = (itemId, newCatName) => {
+    const learnCategory = async (itemId, newCatName) => {
         const state = getShoppingState();
         const item = state.shopping.find(i => i.id == itemId);
         if (!item) return;
@@ -47,13 +47,13 @@ export function createShoppingUi(app) {
         const word = item.name.toLowerCase();
         if (!state.dictionary[newCatName].includes(word)) state.dictionary[newCatName].push(word);
 
-        app.save();
+        await app.api.savePantry(state.shopping);
         app.ui.closeModal();
     };
 
-    const clearDone = () => {
+    const clearDone = async () => {
         const state = getShoppingState();
-        if (confirm("¿Borrar comprados?")) { state.shopping = state.shopping.filter(i => !i.checked); app.save(); }
+        if (confirm("¿Borrar comprados?")) { state.shopping = state.shopping.filter(i => !i.checked); await app.api.savePantry(state.shopping); }
     };
 
     const renderList = () => {

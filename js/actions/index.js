@@ -1,4 +1,4 @@
-export function createActions(app, { firebase }) {
+export function createActions(app) {
     return {
         confirmSaveAiRecipe(name) {
             const recipe = app.pendingAiRecipe;
@@ -13,7 +13,6 @@ export function createActions(app, { firebase }) {
                 app.state.library.push({ id: Date.now().toString(), name, section: defCat, ...recipe });
             }
 
-            app.save();
             app.ui.closeModal();
             app.pendingAiRecipe = null;
             app.ui.toast('Receta guardada en el libro', { type: 'success' });
@@ -32,14 +31,12 @@ export function createActions(app, { firebase }) {
             const idx = app.state.library.findIndex(r => r.id == id);
             if (idx > -1) app.state.library[idx] = recipe;
             else app.state.library.push(recipe);
-            app.save();
             app.ui.closeModal();
             app.ui.toast('Receta guardada', { type: 'success' });
         },
         deleteRecipe(id) {
             if (confirm('¿Borrar?')) {
                 app.state.library = app.state.library.filter(r => r.id != id);
-                app.save();
                 app.ui.closeModal();
                 app.ui.toast('Receta eliminada', { type: 'success' });
             }
@@ -49,24 +46,9 @@ export function createActions(app, { firebase }) {
             const adults = document.getElementById('cfgAdults').value;
             const kids = document.getElementById('cfgKids').value;
             const notes = document.getElementById('cfgNotes').value;
-            const apiKey = document.getElementById('cfgApiKey').value;
-            const accessCode = document.getElementById('cfgAccessCode')?.value?.trim();
 
             app.state.config.family = { adults, kids, notes };
-
-            if (apiKey && apiKey !== app.aiKey) {
-                firebase.saveAiKey(apiKey);
-                app.aiKey = apiKey;
-            }
-
-            if (accessCode) {
-                const accessCodeHash = await app.auth.hashAccessCode(accessCode);
-                await firebase.saveAccessCodeHash(accessCodeHash);
-                app.accessCodeHash = accessCodeHash;
-            }
-
-            app.save();
-            app.ui.toast('Configuración guardada', { type: 'success' });
+            app.ui.toast('Configuración local guardada', { type: 'success' });
         },
         addCategory(type) {
             const name = prompt('Nombre de la nueva categoría:');
@@ -77,14 +59,12 @@ export function createActions(app, { firebase }) {
             if (type === 'shop') app.state.config.categories.shop.push(newCat);
             if (type === 'recipe') app.state.config.categories.recipe.push(newCat);
 
-            app.save();
             app.ui.toast('Categoría añadida', { type: 'success' });
         },
         deleteCategory(type, id) {
             if (!confirm('¿Borrar categoría? Los elementos asociados no se borrarán, pero perderán su icono.')) return;
             if (type === 'shop') app.state.config.categories.shop = app.state.config.categories.shop.filter(c => c.id !== id);
             if (type === 'recipe') app.state.config.categories.recipe = app.state.config.categories.recipe.filter(c => c.id !== id);
-            app.save();
             app.ui.toast('Categoría eliminada', { type: 'success' });
         },
         editCategoryIcon(type, id) {
@@ -108,7 +88,6 @@ export function createActions(app, { firebase }) {
             const catList = type === 'shop' ? app.state.config.categories.shop : app.state.config.categories.recipe;
             const cat = catList.find(c => c.id === id);
             if (cat) cat.icon = icon;
-            app.save();
             app.ui.closeModal();
             app.components.config();
             app.ui.toast('Icono actualizado', { type: 'success' });

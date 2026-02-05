@@ -1,10 +1,21 @@
-res.setHeader('Access-Control-Allow-Origin', '*');
-res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+module.exports = async (req, res) => {
+  // 🔹 Headers CORS
+  res.setHeader('Access-Control-Allow-Origin', '*'); // O tu dominio específico
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-if (req.method === 'OPTIONS') {
-  return res.status(200).end(); // Responder preflight
-}
+  // 🔹 Responder OPTIONS (preflight)
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  try {
+    // Aquí sigue tu lógica normal
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error interno' });
+  }
+};
 
 const { requireAuth, sendError } = require('../lib/auth');
 const { getCalendar, setCalendar } = require('../lib/db');

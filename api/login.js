@@ -1,48 +1,14 @@
-module.exports = async (req, res) => {
-  // 🔹 Headers de CORS siempre, antes de cualquier cosa
-  res.setHeader('Access-Control-Allow-Origin', 'https://frangeta.github.io');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+const { signToken } = require('../lib/auth');
+const withCors = require('../lib/cors');
 
-  // 🔹 Responder preflight
-  if (req.method === 'OPTIONS') return res.status(200).end();
+module.exports = withCors(async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Solo POST' });
 
-  try {
-    // 🔹 Lógica principal
-  } catch (err) {
-    console.error('ERROR INTERNO:', err);
-    // 🔹 Asegurarse que siempre se envíe un JSON con CORS
-    res.status(500).json({ error: 'Error interno' });
-  }
-};
-
-module.exports = (req, res) => {
-  if (req.method !== 'POST') {
-    return sendError(res, 405, 'METHOD_NOT_ALLOWED', 'Solo POST');
+  const { accessCode } = req.body || {};
+  if (!accessCode || accessCode !== process.env.AUTH_ACCESS_CODE) {
+    return res.status(401).json({ error: 'Clave inválida' });
   }
 
-  try {
-    const { username, password } = req.body || {};
-    const validUser = process.env.AUTH_USERNAME;
-    const validPassword = process.env.AUTH_PASSWORD;
-
-    if (!validUser || !validPassword) {
-      return sendError(res, 500, 'SERVER_ERROR', 'Credenciales no configuradas');
-    }
-
-    if (!username || !password) {
-      return sendError(res, 403, 'FORBIDDEN', 'Credenciales incompletas');
-    }
-
-    if (username !== validUser || password !== validPassword) {
-      return sendError(res, 403, 'FORBIDDEN', 'Credenciales inválidas');
-    }
-
-    const token = signToken({ sub: username });
-    return res.status(200).json({ ok: true, data: { token } });
-
-  } catch (err) {
-    console.error(err);
-    return sendError(res, 500, 'SERVER_ERROR', 'Error interno');
-  }
-};
+  const token = signToken({ sub: 'user' });
+  return res.status(200).json({ token });
+});

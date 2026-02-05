@@ -61,6 +61,40 @@ salchipapas-api/
 - `OPENAI_MODEL` (opcional)
 - `CORS_ORIGIN` (opcional, recomendado)
 
+
+### Login con usuario y contraseña (qué configurar exactamente)
+
+Para que funcione el acceso desde la pantalla de login del frontend, en Vercel necesitas **mínimo** estas variables:
+
+- `AUTH_USERNAME`: usuario válido para iniciar sesión.
+- `AUTH_PASSWORD`: contraseña válida para iniciar sesión.
+- `JWT_SECRET`: secreto para firmar el token JWT.
+- `JWT_EXPIRES_IN` (opcional): duración del token, por ejemplo `2h`.
+
+Si `AUTH_USERNAME` o `AUTH_PASSWORD` faltan, `/api/login` responde `500` con `Credenciales no configuradas`.
+Si envías un usuario/clave distintos a los configurados, responde `403` con `Credenciales inválidas`.
+
+#### Paso a paso en Vercel
+
+1. Ve a **Vercel → Project → Settings → Environment Variables**.
+2. Crea estas variables para Production (y Preview si lo usas):
+   - `AUTH_USERNAME=tu_usuario`
+   - `AUTH_PASSWORD=tu_password_seguro`
+   - `JWT_SECRET=una_cadena_larga_y_secreta`
+   - `JWT_EXPIRES_IN=2h` (opcional)
+3. Añade también `CORS_ORIGIN` con tu dominio frontend exacto (GitHub Pages).
+4. Guarda y ejecuta **Redeploy**.
+
+#### Verificación rápida del login
+
+```bash
+curl -i -X POST 'https://salchipapas-app-test.vercel.app/api/login' \
+  -H 'Content-Type: application/json' \
+  --data '{"username":"tu_usuario","password":"tu_password_seguro"}'
+```
+
+Resultado esperado: `200 OK` y un JSON con `data.token`.
+
 `CORS_ORIGIN` acepta una o varias URLs separadas por coma, por ejemplo:
 
 ```txt

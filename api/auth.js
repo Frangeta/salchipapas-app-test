@@ -7,7 +7,7 @@ function getSecret() {
 }
 
 function getAllowedOrigin() {
-    return process.env.AUTH_ALLOWED_ORIGIN || '*';
+    return 'https://salchipapas-app-test.vercel.app';
 }
 
 function applyCors(res) {

@@ -7,13 +7,25 @@ function getAllowedOrigins() {
     .filter(Boolean);
 }
 
+function normalizeOrigin(origin) {
+  if (!origin) return '';
+  return origin.trim().replace(/\/+$/, '');
+}
+
 function resolveCorsOrigin(req) {
   const requestOrigin = req.headers.origin;
   const allowedOrigins = getAllowedOrigins();
+  const normalizedRequestOrigin = normalizeOrigin(requestOrigin);
 
   if (!requestOrigin) return '*';
   if (!allowedOrigins.length) return requestOrigin;
-  if (allowedOrigins.includes(requestOrigin)) return requestOrigin;
+  if (allowedOrigins.includes('*')) return requestOrigin;
+
+  const isAllowed = allowedOrigins.some((origin) => {
+    return normalizeOrigin(origin) === normalizedRequestOrigin;
+  });
+
+  if (isAllowed) return requestOrigin;
   return null;
 }
 

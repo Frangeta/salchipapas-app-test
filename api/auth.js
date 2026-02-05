@@ -1,19 +1,18 @@
 module.exports = async (req, res) => {
-  // 🔹 Headers CORS obligatorios
-  res.setHeader('Access-Control-Allow-Origin', '*'); // o tu dominio específico
+  // 🔹 Headers de CORS siempre, antes de cualquier cosa
+  res.setHeader('Access-Control-Allow-Origin', 'https://frangeta.github.io');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // 🔹 Responder siempre a OPTIONS para preflight
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  // 🔹 Responder preflight
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    // Tu lógica normal aquí (POST/GET)
+    // 🔹 Lógica principal
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Error interno' });
+    console.error('ERROR INTERNO:', err);
+    // 🔹 Asegurarse que siempre se envíe un JSON con CORS
+    res.status(500).json({ error: 'Error interno' });
   }
 };
 

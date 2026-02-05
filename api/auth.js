@@ -6,12 +6,6 @@ function getSecret() {
     return process.env.AUTH_TOKEN_SECRET || 'dev-token-secret-change-me';
 }
 
-function applyCors(res) {
-    res.setHeader('Access-Control-Allow-Origin', 'https://salchipapas-app-test.vercel.app');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-}
-
 function sign(payloadBase64) {
     return crypto.createHmac('sha256', getSecret())
         .update(payloadBase64)
@@ -47,13 +41,7 @@ function isValidToken(token) {
 }
 
 module.exports = async (req, res) => {
-    applyCors(res);
-
     try {
-        if (req.method === 'OPTIONS') {
-            return res.status(200).end();
-        }
-
         if (req.method !== 'POST') {
             return res.status(405).json({ error: 'Method Not Allowed' });
         }
@@ -83,8 +71,6 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Acción no soportada' });
 
     } catch (err) {
-        // CORS TAMBIÉN EN ERRORES
-        applyCors(res);
         console.error(err);
         return res.status(500).json({ error: 'Error interno' });
     }

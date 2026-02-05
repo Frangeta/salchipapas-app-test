@@ -17,6 +17,7 @@ const FamilyApp = {
     currentMonth: new Date(),
     aiKey: null,
     accessCodeHash: null,
+    pendingAiRecipe: null,
 
     async init() {
         try {
@@ -40,7 +41,10 @@ const FamilyApp = {
 
                 this.render();
             });
-        } catch (e) { console.error("Error Init:", e); }
+        } catch (e) {
+            console.error('Error Init:', e);
+            this.ui.toast('Error al iniciar la aplicación', { type: 'error' });
+        }
     },
 
     save() { firebase.saveState(this.state); },

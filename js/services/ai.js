@@ -24,8 +24,12 @@ export function createAi(app) {
         },
 
         async generateMenu(btn = null) {
-            if (!app.aiKey) return alert("Falta API Key");
+            if (!app.aiKey) {
+                app.ui.toast("Falta API Key", { type: "error" });
+                return;
+            }
             if (btn) { btn.disabled = true; btn.innerText = "Pensando menú..."; }
+            app.ui.setLoading(true, "Generando menú semanal...");
 
             let start = new Date();
             start.setDate(start.getDate() + (1 + 7 - start.getDay()) % 7);
@@ -43,11 +47,16 @@ export function createAi(app) {
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${app.aiKey}` },
                     body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: fullPrompt }], temperature: 0.6 })
                 });
+                if (!response.ok) throw new Error('No se pudo generar el menú IA');
                 const data = await response.json();
                 const plan = this.safeJsonParse(data.choices[0].message.content.match(/\[.*\]/s)[0]);
                 this.renderAiResults(plan);
-            } catch (e) { alert("Error IA: " + e.message); }
-            finally { if (btn) { btn.disabled = false; btn.innerText = "✨ Generar Menú Semanal"; } }
+            } catch (e) {
+                app.ui.toast("Error IA: " + e.message, { type: "error" });
+            } finally {
+                app.ui.setLoading(false);
+                if (btn) { btn.disabled = false; btn.innerText = "✨ Generar Menú Semanal"; }
+            }
         },
 
         renderAiResults(plan) {
@@ -74,6 +83,7 @@ export function createAi(app) {
         async proposeRecipe(dishName) {
             if (!dishName) return;
             app.ui.openModal(`<div class="text-center py-10"><p class="text-sm text-gray-400 animate-pulse">Generando receta familiar para ${dishName}...</p></div>`);
+            app.ui.setLoading(true, "Generando receta...");
 
             const config = app.state.config || DEFAULT_CONFIG;
             const fam = config.family || DEFAULT_CONFIG.family;
@@ -88,10 +98,12 @@ export function createAi(app) {
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${app.aiKey}` },
                     body: JSON.stringify({ model: "llama-3.1-8b-instant", messages: [{ role: "user", content: fullPrompt }], temperature: 0.3 })
                 });
+                if (!response.ok) throw new Error('No se pudo generar la receta IA');
                 const data = await response.json();
                 const rawR = this.safeJsonParse(data.choices[0].message.content.match(/\{.*\}/s)[0]);
                 const r = { ing: this.cleanText(rawR.ing), steps: this.cleanText(rawR.steps), tip: this.cleanText(rawR.tip) };
-                window._currentAiRecipe = r;
+                app.pendingAiRecipe = r;
+                app.ui.setLoading(false);
                 app.ui.openModal(`
                     <h3 class="font-bold text-primary text-sm mb-4 uppercase">Receta Familiar</h3>
                     <div class="space-y-4 text-left overflow-y-auto max-h-96">
@@ -102,7 +114,12 @@ export function createAi(app) {
                     </div>
                     <button data-action="confirm-save-ai-recipe" data-name="${dishName.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" class="w-full bg-success text-white py-4 rounded-2xl font-bold uppercase text-[10px] mt-6">✓ Guardar en Libro</button>
                 `);
-            } catch (e) { console.error(e); alert("Error de formato en la respuesta de la IA."); app.ui.closeModal(); }
+            } catch (e) {
+                app.ui.setLoading(false);
+                console.error(e);
+                app.ui.toast("Error de formato en la respuesta de la IA.", { type: "error" });
+                app.ui.closeModal();
+            }
         }
     };
 }

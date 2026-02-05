@@ -32,7 +32,8 @@
             <p class="text-sm text-gray-400" id="lockMsg">Ingresa tu clave de acceso</p>
         </div>
         <input type="password" id="accessCodeInput" placeholder="Clave de acceso" class="w-64 text-center rounded-2xl border-none shadow-sm p-4 mb-2 focus:ring-2 focus:ring-primary" autocomplete="off">
-        <p class="text-[11px] text-gray-400 mb-4 text-center">Pulsa <strong>Solicitar acceso</strong> o la tecla <strong>Enter</strong>.</p>
+        <p class="text-[11px] text-gray-400 mb-2 text-center">Pulsa <strong>Solicitar acceso</strong> o la tecla <strong>Enter</strong>.</p>
+        <p id="lockError" class="hidden text-[11px] text-red-500 mb-4 text-center font-semibold"></p>
         <button id="btnLock" data-action="request-token" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg">Solicitar acceso</button>
     </div>
 

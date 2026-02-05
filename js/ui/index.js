@@ -1,5 +1,31 @@
+import { DEFAULT_CONFIG } from '../constants/defaultConfig.js';
+
 export function createUi(app) {
     const escapeAttr = (value) => String(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    let toastTimer = null;
+
+    const ensureToast = () => {
+        let toast = document.getElementById('appToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'appToast';
+            toast.className = 'app-toast hidden';
+            document.body.appendChild(toast);
+        }
+        return toast;
+    };
+
+    const ensureLoader = () => {
+        let loader = document.getElementById('appLoader');
+        if (!loader) {
+            loader = document.createElement('div');
+            loader.id = 'appLoader';
+            loader.className = 'app-loader hidden';
+            loader.innerHTML = '<div class="app-loader__spinner"></div><p class="app-loader__text">Cargando...</p>';
+            document.body.appendChild(loader);
+        }
+        return loader;
+    };
 
     return {
         switchTab(id) {
@@ -41,6 +67,28 @@ export function createUi(app) {
         },
         closeModal() {
             document.getElementById('modalOverlay').classList.add('hidden');
+        },
+        toast(message, { type = 'info', duration = 2800 } = {}) {
+            const toast = ensureToast();
+            toast.textContent = message;
+            toast.dataset.type = type;
+            toast.classList.remove('hidden');
+
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, duration);
+        },
+        setLoading(isLoading, message = 'Cargando...') {
+            const loader = ensureLoader();
+            loader.querySelector('.app-loader__text').textContent = message;
+            loader.classList.toggle('hidden', !isLoading);
+        },
+        setLockError(message = '') {
+            const lockError = document.getElementById('lockError');
+            if (!lockError) return;
+            lockError.textContent = message;
+            lockError.classList.toggle('hidden', !message);
         }
     };
 }

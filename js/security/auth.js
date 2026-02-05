@@ -26,10 +26,12 @@ export function createAuth(app, { firebase }) {
             const accessCode = accessCodeEl?.value?.trim();
 
             if (!accessCode) {
-                alert('Introduce tu clave de acceso.');
+                app.ui.setLockError('Introduce tu clave de acceso.');
+                app.ui.toast('Introduce tu clave de acceso.', { type: 'error' });
                 return;
             }
 
+            app.ui.setLockError('');
             const inputHash = await hashAccessCode(accessCode);
 
             if (!app.accessCodeHash) {
@@ -37,17 +39,19 @@ export function createAuth(app, { firebase }) {
                 app.accessCodeHash = inputHash;
                 sessionStorage.setItem(UNLOCK_STORAGE_KEY, 'true');
                 this.unlock();
-                alert('Clave creada y guardada en Firebase.');
+                app.ui.toast('Clave creada y guardada en Firebase.', { type: 'success' });
                 return;
             }
 
             if (inputHash !== app.accessCodeHash) {
-                alert('Clave inválida');
+                app.ui.setLockError('Clave inválida. Vuelve a intentarlo.');
+                app.ui.toast('Clave inválida', { type: 'error' });
                 return;
             }
 
             sessionStorage.setItem(UNLOCK_STORAGE_KEY, 'true');
             this.unlock();
+            app.ui.toast('Acceso concedido', { type: 'success' });
         },
 
         unlock() {

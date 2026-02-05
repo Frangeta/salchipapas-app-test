@@ -6,26 +6,26 @@ function getSecret() {
     return process.env.AUTH_TOKEN_SECRET || 'dev-token-secret-change-me';
 }
 
-function getAllowedOrigin() {
-    return 'https://salchipapas-app-test.vercel.app';
-}
-
 function applyCors(res) {
-    res.setHeader('Access-Control-Allow-Origin', getAllowedOrigin());
+    res.setHeader('Access-Control-Allow-Origin', 'https://salchipapas-app-test.vercel.app');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
 function sign(payloadBase64) {
-    return crypto.createHmac('sha256', getSecret()).update(payloadBase64).digest('base64url');
+    return crypto.createHmac('sha256', getSecret())
+        .update(payloadBase64)
+        .digest('base64url');
 }
 
 function createToken() {
     const expiresAt = Date.now() + TOKEN_TTL_MS;
-    const payloadBase64 = Buffer.from(JSON.stringify({ expiresAt }), 'utf-8').toString('base64url');
-    const signature = sign(payloadBase64);
+    const payloadBase64 = Buffer
+        .from(JSON.stringify({ expiresAt }), 'utf-8')
+        .toString('base64url');
+
     return {
-        token: `${payloadBase64}.${signature}`,
+        token: `${payloadBase64}.${sign(payloadBase64)}`,
         expiresAt
     };
 }
@@ -34,48 +34,58 @@ function isValidToken(token) {
     if (!token || !token.includes('.')) return false;
 
     const [payloadBase64, signature] = token.split('.');
-    if (!payloadBase64 || !signature) return false;
-
-    const expectedSignature = sign(payloadBase64);
-    if (signature !== expectedSignature) return false;
+    if (signature !== sign(payloadBase64)) return false;
 
     try {
-        const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString('utf-8'));
+        const payload = JSON.parse(
+            Buffer.from(payloadBase64, 'base64url').toString('utf-8')
+        );
         return Number(payload.expiresAt) > Date.now();
-    } catch (_error) {
+    } catch {
         return false;
     }
 }
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
     applyCors(res);
 
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
-
-    const { action, accessCode, token } = req.body || {};
-
-    if (action === 'issue') {
-        const expectedCode = process.env.AUTH_ACCESS_CODE;
-        if (!expectedCode) {
-            return res.status(500).json({ error: 'AUTH_ACCESS_CODE no configurado' });
+    try {
+        if (req.method === 'OPTIONS') {
+            return res.status(200).end();
         }
 
-        if (accessCode !== expectedCode) {
-            return res.status(401).json({ error: 'Clave inválida' });
+        if (req.method !== 'POST') {
+            return res.status(405).json({ error: 'Method Not Allowed' });
         }
 
-        return res.status(200).json(createToken());
-    }
+        const body = typeof req.body === 'object' && req.body !== null
+            ? req.body
+            : {};
 
-    if (action === 'validate') {
-        return res.status(200).json({ valid: isValidToken(token) });
-    }
+        const { action, accessCode, token } = body;
 
-    return res.status(400).json({ error: 'Acción no soportada' });
+        if (action === 'issue') {
+            if (!process.env.AUTH_ACCESS_CODE) {
+                return res.status(500).json({ error: 'AUTH_ACCESS_CODE no configurado' });
+            }
+
+            if (accessCode !== process.env.AUTH_ACCESS_CODE) {
+                return res.status(401).json({ error: 'Clave inválida' });
+            }
+
+            return res.status(200).json(createToken());
+        }
+
+        if (action === 'validate') {
+            return res.status(200).json({ valid: isValidToken(token) });
+        }
+
+        return res.status(400).json({ error: 'Acción no soportada' });
+
+    } catch (err) {
+        // CORS TAMBIÉN EN ERRORES
+        applyCors(res);
+        console.error(err);
+        return res.status(500).json({ error: 'Error interno' });
+    }
 };

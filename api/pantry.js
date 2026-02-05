@@ -1,16 +1,16 @@
 module.exports = async (req, res) => {
-  // 🔹 Headers CORS
-  res.setHeader('Access-Control-Allow-Origin', '*'); // O tu dominio específico
+  // 🔹 Headers CORS obligatorios
+  res.setHeader('Access-Control-Allow-Origin', '*'); // o tu dominio específico
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // 🔹 Responder OPTIONS (preflight)
+  // 🔹 Responder siempre a OPTIONS para preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   try {
-    // Aquí sigue tu lógica normal
+    // Tu lógica normal aquí (POST/GET)
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Error interno' });

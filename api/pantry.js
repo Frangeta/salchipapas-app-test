@@ -18,7 +18,9 @@ module.exports = requireAuth((req, res) => {
     }
 
     return sendError(res, 405, 'METHOD_NOT_ALLOWED', 'Método no permitido');
-  } catch (_error) {
+
+  } catch (err) {
+    console.error(err);
     return sendError(res, 500, 'SERVER_ERROR', 'Error interno');
   }
 });

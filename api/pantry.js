@@ -1,6 +1,6 @@
 const { requireAuth, sendError } = require('../lib/auth');
 const { getPantry, setPantry } = require('../lib/db');
-const withCors = require('../lib/cors');
+const withCors = require('../lib/withCors');
 
 module.exports = withCors(requireAuth((req, res) => {
   const userId = req.user.sub;

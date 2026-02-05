@@ -1,6 +1,6 @@
 const OpenAI = require('openai');
 const { requireAuth, sendError } = require('../lib/auth');
-const withCors = require('../lib/cors');
+const withCors = require('../lib/withCors');
 
 const SYSTEM_PROMPT = 'Devuelve SOLO JSON válido con esta forma: {"comidas":[{"dia":"Lunes","plato":"..."}],"cenas":[{"dia":"Lunes","plato":"..."}]}. Deben ser exactamente 7 comidas y 7 cenas.';
 

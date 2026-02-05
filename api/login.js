@@ -1,5 +1,5 @@
 const { signToken } = require('../lib/auth');
-const withCors = require('../lib/cors');
+const withCors = require('../lib/withCors');
 
 module.exports = withCors(async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Solo POST' });

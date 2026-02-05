@@ -8,9 +8,12 @@ Define la URL del backend antes de cargar `js/main.js`:
 
 ```html
 <script>
-  window.SALCHIPAPAS_API_URL = "https://TU-PROYECTO.vercel.app";
+  window.SALCHIPAPAS_API_URL = "https://salchipapas-app-test.vercel.app";
 </script>
 ```
+
+> Si no quieres hardcodearlo en el HTML, también puedes definir `window.SALCHIPAPAS_API_URL`
+> antes de cargar `js/main.js` desde otra etiqueta `<script>` o desde un archivo de configuración.
 
 Si no se define, el cliente usa `http://localhost:3000`.
 
@@ -58,6 +61,40 @@ salchipapas-api/
 - `OPENAI_MODEL` (opcional)
 - `CORS_ORIGIN` (opcional, recomendado)
 
+
+### Login con usuario y contraseña (qué configurar exactamente)
+
+Para que funcione el acceso desde la pantalla de login del frontend, en Vercel necesitas **mínimo** estas variables:
+
+- `AUTH_USERNAME`: usuario válido para iniciar sesión.
+- `AUTH_PASSWORD`: contraseña válida para iniciar sesión.
+- `JWT_SECRET`: secreto para firmar el token JWT.
+- `JWT_EXPIRES_IN` (opcional): duración del token, por ejemplo `2h`.
+
+Si `AUTH_USERNAME` o `AUTH_PASSWORD` faltan, `/api/login` responde `500` con `Credenciales no configuradas`.
+Si envías un usuario/clave distintos a los configurados, responde `403` con `Credenciales inválidas`.
+
+#### Paso a paso en Vercel
+
+1. Ve a **Vercel → Project → Settings → Environment Variables**.
+2. Crea estas variables para Production (y Preview si lo usas):
+   - `AUTH_USERNAME=tu_usuario`
+   - `AUTH_PASSWORD=tu_password_seguro`
+   - `JWT_SECRET=una_cadena_larga_y_secreta`
+   - `JWT_EXPIRES_IN=2h` (opcional)
+3. Añade también `CORS_ORIGIN` con tu dominio frontend exacto (GitHub Pages).
+4. Guarda y ejecuta **Redeploy**.
+
+#### Verificación rápida del login
+
+```bash
+curl -i -X POST 'https://salchipapas-app-test.vercel.app/api/login' \
+  -H 'Content-Type: application/json' \
+  --data '{"username":"tu_usuario","password":"tu_password_seguro"}'
+```
+
+Resultado esperado: `200 OK` y un JSON con `data.token`.
+
 `CORS_ORIGIN` acepta una o varias URLs separadas por coma, por ejemplo:
 
 ```txt
@@ -65,6 +102,18 @@ https://frangeta.github.io,http://localhost:8000,http://127.0.0.1:8000
 ```
 
 Si no configuras `CORS_ORIGIN`, la API reflejará el origin solicitante para facilitar desarrollo.
+
+### Configuración sugerida para este proyecto
+
+Con tu backend en Vercel (`https://salchipapas-app-test.vercel.app`):
+
+1. En Vercel → **Project Settings** → **Environment Variables**, configura:
+   - `CORS_ORIGIN=https://<tu-usuario>.github.io`
+   - si pruebas localmente, añade también: `,http://localhost:8000,http://127.0.0.1:8000`
+2. Guarda cambios y ejecuta **Redeploy** para aplicar variables.
+3. Comprueba en navegador:
+   - `https://salchipapas-app-test.vercel.app/api/login` (debe responder, aunque sea 405 si usas GET)
+4. En frontend, usa exactamente esa URL como `window.SALCHIPAPAS_API_URL`.
 
 ### Deploy rápido
 

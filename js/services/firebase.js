@@ -8,27 +8,27 @@ export function createFirebaseService() {
     const db = getDatabase(app);
 
     const cloudRef = ref(db, 'family_v9');
-    const pinRef = ref(db, 'family_v9/config/accessPin');
     const aiKeyRef = ref(db, 'family_v9/config/aiApiKey');
+    const accessCodeHashRef = ref(db, 'family_v9/config/accessCodeHash');
 
     const loadInitial = async () => {
-        const [pinSnap, keySnap] = await Promise.all([get(pinRef), get(aiKeyRef)]);
+        const [keySnap, accessCodeHashSnap] = await Promise.all([get(aiKeyRef), get(accessCodeHashRef)]);
         return {
-            pin: pinSnap.exists() ? pinSnap.val() : null,
-            aiKey: keySnap.exists() ? keySnap.val() : null
+            aiKey: keySnap.exists() ? keySnap.val() : null,
+            accessCodeHash: accessCodeHashSnap.exists() ? accessCodeHashSnap.val() : null
         };
     };
 
     const subscribe = (callback) => onValue(cloudRef, callback);
     const saveState = (state) => set(cloudRef, state);
-    const savePin = (pin) => set(pinRef, pin);
     const saveAiKey = (key) => set(aiKeyRef, key);
+    const saveAccessCodeHash = (hash) => set(accessCodeHashRef, hash);
 
     return {
         loadInitial,
         subscribe,
         saveState,
-        savePin,
-        saveAiKey
+        saveAiKey,
+        saveAccessCodeHash
     };
 }

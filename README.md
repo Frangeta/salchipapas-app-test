@@ -16,6 +16,21 @@ Aplicación web estática para la gestión familiar, con foco en planificación 
 └── README.md
 ```
 
+## Acceso con clave en Firebase (sin backend extra)
+- La app usa una clave de acceso administrada desde Firebase.
+- La clave **no se guarda en texto plano**: se transforma a hash SHA-256 antes de guardarse en `family_v9/config/accessCodeHash`.
+- El usuario escribe su clave en la pantalla de bloqueo y la app compara hashes para permitir el acceso.
+
+### ¿Cómo crear o cambiar la clave?
+1. Entra a la pestaña **Config**.
+2. En **Sistema**, escribe una nueva clave en **CLAVE DE ACCESO**.
+3. Presiona **Guardar Configuración**.
+4. Comparte esa clave con los usuarios.
+
+### ¿Qué se guarda en Firebase?
+- `family_v9/config/accessCodeHash`: hash SHA-256 de la clave.
+- `family_v9/config/aiApiKey`: API key de IA (si aplica).
+
 ## Cómo ejecutar
 Puedes abrir `index.html` directamente en tu navegador o levantar un servidor estático local:
 

@@ -1,6 +1,6 @@
 import { createFirebaseService } from './services/firebase.js';
 import { ensureConfigIntegrity } from './state/config.js';
-import { createSecurity } from './security/index.js';
+import { createAuth } from './security/auth.js';
 import { createAi } from './services/ai.js';
 import { createActions } from './actions/index.js';
 import { createComponents } from './components/index.js';
@@ -15,23 +15,16 @@ const firebase = createFirebaseService();
 const FamilyApp = {
     state: getState(),
     currentMonth: new Date(),
-    remotePin: null,
     aiKey: null,
+    accessCodeHash: null,
 
     async init() {
         try {
-            const { pin, aiKey } = await firebase.loadInitial();
-            if (pin) this.remotePin = pin;
+            const { aiKey, accessCodeHash } = await firebase.loadInitial();
             if (aiKey) this.aiKey = aiKey;
+            if (accessCodeHash) this.accessCodeHash = accessCodeHash;
 
-            const elMsg = document.getElementById('lockMsg');
-            const elPin = document.getElementById('pinInput');
-            const elBtn = document.getElementById('btnLock');
-            if (elMsg) elMsg.innerText = this.remotePin ? "PIN requerido" : "Crea un PIN";
-            if (elPin) elPin.disabled = false;
-            if (elBtn) { elBtn.disabled = false; elBtn.classList.remove('opacity-50'); }
-
-            if (sessionStorage.getItem('unlocked') === 'true') this.security.unlock();
+            await this.auth.init();
 
             firebase.subscribe((snapshot) => {
                 const data = snapshot.val();
@@ -60,7 +53,7 @@ const FamilyApp = {
     }
 };
 
-FamilyApp.security = createSecurity(FamilyApp, firebase);
+FamilyApp.auth = createAuth(FamilyApp, { firebase });
 FamilyApp.ai = createAi(FamilyApp);
 FamilyApp.actions = createActions(FamilyApp, { firebase });
 FamilyApp.components = createComponents(FamilyApp);
@@ -92,12 +85,12 @@ function handleActionClick(event) {
         location.reload();
         return;
     }
-    if (action === 'check-pin') {
-        FamilyApp.security.checkPin();
+    if (action === 'request-token') {
+        FamilyApp.auth.requestToken();
         return;
     }
     if (action === 'logout') {
-        FamilyApp.security.logout();
+        FamilyApp.auth.logout();
         return;
     }
     if (action === 'switch-tab' && tab) {
@@ -203,3 +196,11 @@ window.addEventListener('load', () => {
 
 document.addEventListener('click', handleActionClick);
 document.addEventListener('input', handleActionInput);
+document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.id === 'accessCodeInput') {
+        FamilyApp.auth.requestToken();
+    }
+});

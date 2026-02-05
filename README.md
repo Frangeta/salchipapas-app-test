@@ -16,20 +16,20 @@ Aplicación web estática para la gestión familiar, con foco en planificación 
 └── README.md
 ```
 
-## Autenticación temporal
-- El acceso ya no usa PIN en el frontend.
-- El frontend solicita un **token temporal** al endpoint `POST /api/auth`.
-- El backend valida una clave de acceso (`AUTH_ACCESS_CODE`) y emite tokens firmados con `AUTH_TOKEN_SECRET` (TTL 15 min).
+## Acceso con clave en Firebase (sin backend extra)
+- La app usa una clave de acceso administrada desde Firebase.
+- La clave **no se guarda en texto plano**: se transforma a hash SHA-256 antes de guardarse en `family_v9/config/accessCodeHash`.
+- El usuario escribe su clave en la pantalla de bloqueo y la app compara hashes para permitir el acceso.
 
-### Variables de entorno necesarias
-- `AUTH_ACCESS_CODE`: clave requerida para solicitar token.
-- `AUTH_TOKEN_SECRET`: secreto para firmar y validar tokens.
+### ¿Cómo crear o cambiar la clave?
+1. Entra a la pestaña **Config**.
+2. En **Sistema**, escribe una nueva clave en **CLAVE DE ACCESO**.
+3. Presiona **Guardar Configuración**.
+4. Comparte esa clave con los usuarios.
 
-### ¿Cómo solicito el acceso?
-1. El administrador te comparte la clave configurada en `AUTH_ACCESS_CODE`.
-2. En la pantalla inicial, escribe esa clave en **Clave de acceso**.
-3. Presiona **Solicitar acceso** (o Enter).
-4. Si la clave es correcta, el backend devuelve un token temporal (15 min) y la app se desbloquea.
+### ¿Qué se guarda en Firebase?
+- `family_v9/config/accessCodeHash`: hash SHA-256 de la clave.
+- `family_v9/config/aiApiKey`: API key de IA (si aplica).
 
 ## Cómo ejecutar
 Puedes abrir `index.html` directamente en tu navegador o levantar un servidor estático local:

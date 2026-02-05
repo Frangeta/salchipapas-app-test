@@ -6,6 +6,16 @@ function getSecret() {
     return process.env.AUTH_TOKEN_SECRET || 'dev-token-secret-change-me';
 }
 
+function getAllowedOrigin() {
+    return process.env.AUTH_ALLOWED_ORIGIN || '*';
+}
+
+function applyCors(res) {
+    res.setHeader('Access-Control-Allow-Origin', getAllowedOrigin());
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
 function sign(payloadBase64) {
     return crypto.createHmac('sha256', getSecret()).update(payloadBase64).digest('base64url');
 }
@@ -38,6 +48,12 @@ function isValidToken(token) {
 }
 
 module.exports = (req, res) => {
+    applyCors(res);
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }

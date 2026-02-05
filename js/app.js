@@ -16,11 +16,13 @@ const FamilyApp = {
     state: getState(),
     currentMonth: new Date(),
     aiKey: null,
+    accessCodeHash: null,
 
     async init() {
         try {
-            const { aiKey } = await firebase.loadInitial();
+            const { aiKey, accessCodeHash } = await firebase.loadInitial();
             if (aiKey) this.aiKey = aiKey;
+            if (accessCodeHash) this.accessCodeHash = accessCodeHash;
 
             await this.auth.init();
 
@@ -51,7 +53,7 @@ const FamilyApp = {
     }
 };
 
-FamilyApp.auth = createAuth(FamilyApp);
+FamilyApp.auth = createAuth(FamilyApp, { firebase });
 FamilyApp.ai = createAi(FamilyApp);
 FamilyApp.actions = createActions(FamilyApp, { firebase });
 FamilyApp.components = createComponents(FamilyApp);

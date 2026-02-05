@@ -33,17 +33,24 @@ export function createActions(app, { firebase }) {
             }
         },
 
-        saveConfig() {
+        async saveConfig() {
             const adults = document.getElementById('cfgAdults').value;
             const kids = document.getElementById('cfgKids').value;
             const notes = document.getElementById('cfgNotes').value;
             const apiKey = document.getElementById('cfgApiKey').value;
+            const accessCode = document.getElementById('cfgAccessCode')?.value?.trim();
 
             app.state.config.family = { adults, kids, notes };
 
             if (apiKey && apiKey !== app.aiKey) {
                 firebase.saveAiKey(apiKey);
                 app.aiKey = apiKey;
+            }
+
+            if (accessCode) {
+                const accessCodeHash = await app.auth.hashAccessCode(accessCode);
+                await firebase.saveAccessCodeHash(accessCodeHash);
+                app.accessCodeHash = accessCodeHash;
             }
 
             app.save();

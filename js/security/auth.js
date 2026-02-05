@@ -1,43 +1,24 @@
-const TOKEN_STORAGE_KEY = 'auth_token';
-const TOKEN_EXPIRY_STORAGE_KEY = 'auth_token_expiry';
+const UNLOCK_STORAGE_KEY = 'unlocked';
 
-async function requestAuth(endpoint, payload) {
-    const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'No se pudo validar el acceso');
-    }
-
-    return response.json();
+async function hashAccessCode(value) {
+    const input = new TextEncoder().encode(value);
+    const digest = await crypto.subtle.digest('SHA-256', input);
+    return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function createAuth(app) {
+export function createAuth(app, { firebase }) {
     return {
         async init() {
-            const token = sessionStorage.getItem(TOKEN_STORAGE_KEY);
-            const expiresAt = Number(sessionStorage.getItem(TOKEN_EXPIRY_STORAGE_KEY));
-
-            if (!token || !expiresAt || Date.now() >= expiresAt) {
-                this.logout({ reload: false });
-                return;
+            const lockMsg = document.getElementById('lockMsg');
+            if (lockMsg) {
+                lockMsg.textContent = app.accessCodeHash
+                    ? 'Ingresa tu clave para acceder'
+                    : 'Primera vez: crea una clave para proteger el acceso';
             }
 
-            try {
-                const result = await requestAuth('/api/auth', { action: 'validate', token });
-                if (result.valid) {
-                    this.unlock();
-                    return;
-                }
-            } catch (error) {
-                console.error('Error validando token:', error);
+            if (sessionStorage.getItem(UNLOCK_STORAGE_KEY) === 'true') {
+                this.unlock();
             }
-
-            this.logout({ reload: false });
         },
 
         async requestToken() {
@@ -49,18 +30,24 @@ export function createAuth(app) {
                 return;
             }
 
-            try {
-                const { token, expiresAt } = await requestAuth('/api/auth', {
-                    action: 'issue',
-                    accessCode
-                });
+            const inputHash = await hashAccessCode(accessCode);
 
-                sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
-                sessionStorage.setItem(TOKEN_EXPIRY_STORAGE_KEY, String(expiresAt));
+            if (!app.accessCodeHash) {
+                await firebase.saveAccessCodeHash(inputHash);
+                app.accessCodeHash = inputHash;
+                sessionStorage.setItem(UNLOCK_STORAGE_KEY, 'true');
                 this.unlock();
-            } catch (error) {
-                alert(error.message || 'Acceso denegado');
+                alert('Clave creada y guardada en Firebase.');
+                return;
             }
+
+            if (inputHash !== app.accessCodeHash) {
+                alert('Clave inválida');
+                return;
+            }
+
+            sessionStorage.setItem(UNLOCK_STORAGE_KEY, 'true');
+            this.unlock();
         },
 
         unlock() {
@@ -72,11 +59,12 @@ export function createAuth(app) {
         },
 
         logout({ reload = true } = {}) {
-            sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-            sessionStorage.removeItem(TOKEN_EXPIRY_STORAGE_KEY);
+            sessionStorage.removeItem(UNLOCK_STORAGE_KEY);
             if (reload) {
                 location.reload();
             }
-        }
+        },
+
+        hashAccessCode
     };
 }

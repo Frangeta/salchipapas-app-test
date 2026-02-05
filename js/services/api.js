@@ -4,6 +4,14 @@ function getConfiguredBaseUrl() {
   return window.SALCHIPAPAS_API_URL || 'http://localhost:3000';
 }
 
+function buildNetworkError(baseUrl) {
+  return [
+    'No se pudo conectar con la API.',
+    `URL actual: ${baseUrl}`,
+    'Revisa que la URL exista, que Vercel esté desplegado y que CORS_ORIGIN incluya el dominio de GitHub Pages.'
+  ].join(' ');
+}
+
 export function createApiService(app) {
   let session = null;
 
@@ -28,14 +36,22 @@ export function createApiService(app) {
   const request = async (path, { method = 'GET', body, auth = true } = {}) => {
     const current = readSession();
     const headers = { 'Content-Type': 'application/json' };
+    const baseUrl = getConfiguredBaseUrl();
 
     if (auth && current?.token) headers.Authorization = `Bearer ${current.token}`;
 
-    const response = await fetch(`${getConfiguredBaseUrl()}${path}`, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined
-    });
+    let response;
+    try {
+      response = await fetch(`${baseUrl}${path}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined
+      });
+    } catch (_error) {
+      const error = new Error(buildNetworkError(baseUrl));
+      error.status = 0;
+      throw error;
+    }
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {

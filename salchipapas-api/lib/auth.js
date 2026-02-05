@@ -1,10 +1,36 @@
 const jwt = require('jsonwebtoken');
 
-function setJsonHeaders(res) {
+function getAllowedOrigins() {
+  return (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+function resolveCorsOrigin(req) {
+  const requestOrigin = req.headers.origin;
+  const allowedOrigins = getAllowedOrigins();
+
+  if (!requestOrigin) return '*';
+  if (!allowedOrigins.length) return requestOrigin;
+  if (allowedOrigins.includes(requestOrigin)) return requestOrigin;
+  return null;
+}
+
+function setJsonHeaders(req, res) {
+  const corsOrigin = resolveCorsOrigin(req);
+
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || '*');
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Max-Age', '86400');
+
+  if (corsOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', corsOrigin);
+  }
+
+  return Boolean(corsOrigin);
 }
 
 function sendError(res, status, code, message) {
@@ -30,9 +56,16 @@ function verifyToken(token) {
 
 function requireAuth(handler) {
   return (req, res) => {
-    setJsonHeaders(res);
+    const corsOk = setJsonHeaders(req, res);
+
     if (req.method === 'OPTIONS') {
-      return res.status(200).end();
+      return corsOk
+        ? res.status(200).end()
+        : sendError(res, 403, 'FORBIDDEN', 'Origen no permitido por CORS');
+    }
+
+    if (!corsOk) {
+      return sendError(res, 403, 'FORBIDDEN', 'Origen no permitido por CORS');
     }
 
     const authHeader = req.headers.authorization || '';

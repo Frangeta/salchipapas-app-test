@@ -1,9 +1,14 @@
 const { setJsonHeaders, sendError, signToken } = require('../lib/auth');
 
 module.exports = (req, res) => {
-  setJsonHeaders(res);
+  const corsOk = setJsonHeaders(req, res);
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method === 'OPTIONS') {
+    return corsOk
+      ? res.status(200).end()
+      : sendError(res, 403, 'FORBIDDEN', 'Origen no permitido por CORS');
+  }
+  if (!corsOk) return sendError(res, 403, 'FORBIDDEN', 'Origen no permitido por CORS');
   if (req.method !== 'POST') return sendError(res, 405, 'METHOD_NOT_ALLOWED', 'Solo POST');
 
   try {

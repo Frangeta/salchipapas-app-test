@@ -1,6 +1,6 @@
 # Salchipapas Frontend (GitHub Pages)
 
-Frontend estático de Salchipapas. Esta versión ya no contiene secretos y consume una API externa con JWT.
+Frontend estático de Salchipapas. Esta versión no contiene secretos y consume una API externa con JWT.
 
 ## Configuración de API
 
@@ -8,7 +8,7 @@ Define la URL del backend antes de cargar `js/main.js`:
 
 ```html
 <script>
-  window.SALCHIPAPAS_API_URL = "https://salchipapas-api.vercel.app";
+  window.SALCHIPAPAS_API_URL = "https://TU-PROYECTO.vercel.app";
 </script>
 ```
 
@@ -27,13 +27,6 @@ Si no se define, el cliente usa `http://localhost:3000`.
 - `GET/POST /api/calendar`
 - `GET/POST /api/pantry`
 - `POST /api/ai-recipes`
-
-## Cambios clave en frontend
-
-- Eliminada dependencia de API keys en UI de configuración.
-- Eliminada validación de PIN/hash en cliente.
-- Lógica de IA movida a backend.
-- Persistencia de menú y compra a través de API.
 
 ## Nuevo backend (repo separado)
 
@@ -63,7 +56,15 @@ salchipapas-api/
 - `AUTH_PASSWORD`
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL` (opcional)
-- `CORS_ORIGIN` (ej. URL GitHub Pages)
+- `CORS_ORIGIN` (opcional, recomendado)
+
+`CORS_ORIGIN` acepta una o varias URLs separadas por coma, por ejemplo:
+
+```txt
+https://frangeta.github.io,http://localhost:8000,http://127.0.0.1:8000
+```
+
+Si no configuras `CORS_ORIGIN`, la API reflejará el origin solicitante para facilitar desarrollo.
 
 ### Deploy rápido
 
@@ -72,6 +73,13 @@ salchipapas-api/
 3. Configurar variables de entorno.
 4. Deploy.
 5. Copiar URL final y asignarla a `window.SALCHIPAPAS_API_URL` en frontend.
+
+## Solución al error CORS (`Solicitud CORS sin éxito`, status null)
+
+1. Verifica que `window.SALCHIPAPAS_API_URL` apunte a una URL válida y desplegada.
+2. Revisa en Vercel que la función `/api/login` responda directamente.
+3. Configura `CORS_ORIGIN` con tu dominio GitHub Pages exacto.
+4. Haz redeploy tras cambiar variables de entorno.
 
 ## Checklist post-deploy
 

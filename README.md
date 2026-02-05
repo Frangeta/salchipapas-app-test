@@ -8,9 +8,12 @@ Define la URL del backend antes de cargar `js/main.js`:
 
 ```html
 <script>
-  window.SALCHIPAPAS_API_URL = "https://TU-PROYECTO.vercel.app";
+  window.SALCHIPAPAS_API_URL = "https://salchipapas-app-test.vercel.app";
 </script>
 ```
+
+> Si no quieres hardcodearlo en el HTML, también puedes definir `window.SALCHIPAPAS_API_URL`
+> antes de cargar `js/main.js` desde otra etiqueta `<script>` o desde un archivo de configuración.
 
 Si no se define, el cliente usa `http://localhost:3000`.
 
@@ -65,6 +68,18 @@ https://frangeta.github.io,http://localhost:8000,http://127.0.0.1:8000
 ```
 
 Si no configuras `CORS_ORIGIN`, la API reflejará el origin solicitante para facilitar desarrollo.
+
+### Configuración sugerida para este proyecto
+
+Con tu backend en Vercel (`https://salchipapas-app-test.vercel.app`):
+
+1. En Vercel → **Project Settings** → **Environment Variables**, configura:
+   - `CORS_ORIGIN=https://<tu-usuario>.github.io`
+   - si pruebas localmente, añade también: `,http://localhost:8000,http://127.0.0.1:8000`
+2. Guarda cambios y ejecuta **Redeploy** para aplicar variables.
+3. Comprueba en navegador:
+   - `https://salchipapas-app-test.vercel.app/api/login` (debe responder, aunque sea 405 si usas GET)
+4. En frontend, usa exactamente esa URL como `window.SALCHIPAPAS_API_URL`.
 
 ### Deploy rápido
 

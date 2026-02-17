@@ -1,10 +1,15 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
 const firebaseConfig = { databaseURL: "https://familyhub-f33f9-default-rtdb.europe-west1.firebasedatabase.app/" };
 
 export function createFirebaseService() {
-    const app = initializeApp(firebaseConfig);
+    // En algunos navegadores quedan stores de IndexedDB corruptos de versiones previas
+    // (p.ej. firebase-heartbeat-store). Desactivamos automaticDataCollection para evitar
+    // escrituras de heartbeat y reducimos estos errores de runtime (app/idb-set).
+    const app = getApps().length
+        ? getApp()
+        : initializeApp(firebaseConfig, { automaticDataCollectionEnabled: false });
     const db = getDatabase(app);
 
     const rootRef = ref(db, 'family_v9');

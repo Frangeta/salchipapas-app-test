@@ -1,19 +1,9 @@
+import { createFirebaseService } from './firebase.js';
+
 const SESSION_KEY = 'salchipapas_session';
 
-function getConfiguredBaseUrl() {
-  // Si estás en local para desarrollo, usa localhost; en Vercel usa mismo origen
-  return window.SALCHIPAPAS_API_URL || ''; // <-- vacío = mismo origen
-}
-
-function buildNetworkError(baseUrl) {
-  return [
-    'No se pudo conectar con la API.',
-    `URL actual: ${baseUrl || window.location.origin}`,
-    'Revisa que la URL exista y que la app esté desplegada correctamente.'
-  ].join(' ');
-}
-
-export function createApiService(app) {
+export function createApiService() {
+  const firebase = createFirebaseService();
   let session = null;
 
   const readSession = () => {
@@ -34,64 +24,46 @@ export function createApiService(app) {
     else sessionStorage.removeItem(SESSION_KEY);
   };
 
-  const request = async (path, { method = 'GET', body, auth = true } = {}) => {
-    const current = readSession();
-    const headers = { 'Content-Type': 'application/json' };
-    const baseUrl = getConfiguredBaseUrl();
-
-    if (auth && current?.token) headers.Authorization = `Bearer ${current.token}`;
-
-    let response;
-    try {
-      // 🚀 Ruta relativa
-      response = await fetch(`${baseUrl}${path}`, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined
-      });
-    } catch (_error) {
-      const error = new Error(buildNetworkError(baseUrl));
-      error.status = 0;
-      throw error;
-    }
-
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const error = new Error(payload?.error?.message || payload?.error || 'Error de API');
-      error.status = response.status;
-      throw error;
-    }
-
-    return payload;
-  };
-
   return {
     hasValidSession() {
       const current = readSession();
-      return Boolean(current?.token);
+      return Boolean(current?.username);
     },
     clearSession() {
       writeSession(null);
     },
-    async login(credentials) {
-      const data = await request('/api/login', { method: 'POST', body: credentials, auth: false });
-      writeSession({ token: data.token });
-      return data;
+    async login({ username, password }) {
+      const credentials = await firebase.loadCredentials();
+
+      if (!credentials.username || !credentials.password) {
+        throw new Error('Configura authUsername y authPassword en Firebase.');
+      }
+
+      if (username !== credentials.username || password !== credentials.password) {
+        throw new Error('Credenciales inválidas.');
+      }
+
+      writeSession({ username });
+      return { ok: true };
     },
     async loadCalendar() {
-      return request('/api/calendar');
+      const calendar = await firebase.loadCalendar();
+      return { calendar };
     },
     async saveCalendar(calendar) {
-      return request('/api/calendar', { method: 'POST', body: { calendar } });
+      await firebase.saveCalendar(calendar);
+      return { ok: true };
     },
     async loadPantry() {
-      return request('/api/pantry');
+      const pantry = await firebase.loadPantry();
+      return { pantry };
     },
     async savePantry(pantry) {
-      return request('/api/pantry', { method: 'POST', body: { pantry } });
+      await firebase.savePantry(pantry);
+      return { ok: true };
     },
-    async generateAiRecipes(ingredients) {
-      return request('/api/ai-recipes', { method: 'POST', body: { ingredients } });
+    async generateAiRecipes() {
+      throw new Error('La IA por API fue desactivada (sin Vercel).');
     }
   };
 }

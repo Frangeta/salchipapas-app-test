@@ -33,9 +33,9 @@
         </div>
         <input type="text" id="usernameInput" placeholder="Usuario" class="w-64 text-center rounded-2xl border-none shadow-sm p-4 mb-2 focus:ring-2 focus:ring-primary" autocomplete="username">
         <input type="password" id="accessCodeInput" placeholder="Contraseña" class="w-64 text-center rounded-2xl border-none shadow-sm p-4 mb-2 focus:ring-2 focus:ring-primary" autocomplete="current-password">
-        <p class="text-[11px] text-gray-400 mb-2 text-center">Pulsa <strong>Solicitar acceso</strong> para obtener JWT.</p>
+        <p class="text-[11px] text-gray-400 mb-2 text-center">Acceso validado con usuario y contraseña guardados en Firebase.</p>
         <p id="lockError" class="hidden text-[11px] text-red-500 mb-4 text-center font-semibold"></p>
-        <button id="btnLock" data-action="request-token" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg">Solicitar acceso</button>
+        <button id="btnLock" data-action="request-token" class="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg">Entrar</button>
     </div>
 
     <div id="app-content">
@@ -86,9 +86,6 @@
         </div>
     </div>
 
-    <script>
-      window.SALCHIPAPAS_API_URL = window.SALCHIPAPAS_API_URL || 'https://salchipapas-app-test.vercel.app';
-    </script>
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

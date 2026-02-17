@@ -36,21 +36,6 @@ Pasos recomendados:
 2. Borra cache y `sessionStorage` del sitio.
 3. Verifica que el login actual use `username` + `password` leídos desde Firebase (sin request a `/api/login`).
 
-
-### Error Firebase IndexedDB (`app/idb-set`)
-
-Si aparece algo como:
-
-`Firebase: Error thrown when writing to IndexedDB ... firebase-heartbeat-store ... (app/idb-set)`
-
-normalmente es caché/IndexedDB corrupto de una versión previa del SDK en ese navegador.
-
-Pasos rápidos:
-
-1. Cierra todas las pestañas de la app.
-2. Borra los datos del sitio (incluyendo IndexedDB) para `frangeta.github.io`.
-3. Abre de nuevo la app y recarga.
-
 ## Estructura
 
 - `js/services/firebase.js`: lectura/escritura de Firebase.

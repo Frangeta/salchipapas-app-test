@@ -34,7 +34,20 @@ export function createUi(app) {
             document.getElementById(id).classList.add('active');
             document.querySelector(`[data-tab="${id}"]`).classList.add('active', 'text-primary');
             if (id === 'planner') {
-                document.getElementById('planner').innerHTML = `<h2 class="text-2xl font-bold mb-6">IA Planner</h2><button data-action="ai-generate-menu" class="bg-primary text-white w-full py-4 rounded-3xl font-bold shadow-lg">✨ Generar Menú Semanal</button><div id="plannerResults" class="mt-8 pb-20"></div>`;
+                document.getElementById('planner').innerHTML = `
+                    <h2 class="text-2xl font-bold mb-6">IA Planner</h2>
+                    <div class="bg-white rounded-3xl border p-4 space-y-3">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase">Fuente de ingredientes</label>
+                        <select id="plannerSource" class="w-full rounded-2xl bg-gray-50 border-none text-sm">
+                            <option value="pantry">Usar Despensa (Compra)</option>
+                            <option value="custom">Escribir ingredientes</option>
+                        </select>
+                        <textarea id="plannerIngredients" class="w-full rounded-2xl bg-gray-50 border-none text-xs h-24" placeholder="Ej: arroz, pollo, tomate"></textarea>
+                        <p class="text-[10px] text-gray-500">Si eliges Despensa se usarán automáticamente los ingredientes de la lista de compra.</p>
+                        <button data-action="ai-generate-menu" class="bg-primary text-white w-full py-4 rounded-3xl font-bold shadow-lg">✨ Generar Menú Semanal</button>
+                    </div>
+                    <div id="plannerResults" class="mt-8 pb-20"></div>
+                `;
             }
             app.render();
         },

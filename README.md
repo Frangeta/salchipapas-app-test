@@ -16,11 +16,50 @@ Al iniciar sesión correctamente se guarda una sesión local en `sessionStorage`
 ## Datos persistidos
 
 - Calendario: `family_v9/calendar`
-- Lista de compra: `family_v9/pantry`
+- Lista de compra / despensa: `family_v9/pantry`
 
-## IA
+## IA (reactivada)
 
-La generación de recetas por API externa quedó desactivada para eliminar la dependencia de Vercel.
+La generación de menú vuelve a estar activa para:
+
+- Menú de **7 días** con **comidas y cenas**.
+- Generación usando ingredientes desde:
+  - la **Despensa** (lista de compra), o
+  - ingredientes manuales escritos en el planner.
+
+El frontend llama a un endpoint externo (`POST /api/ai-recipes`) y espera la forma:
+
+```json
+{
+  "comidas": [{ "dia": "Lunes", "plato": "..." }],
+  "cenas": [{ "dia": "Lunes", "plato": "..." }]
+}
+```
+
+## ¿Hace falta Vercel?
+
+**Sí, solo para IA** si quieres mantener el frontend estático en GitHub Pages/Firebase Hosting sin exponer la `OPENAI_API_KEY`.
+
+Recomendación:
+
+1. Mantener frontend estático (sin backend propio para auth).
+2. Desplegar **solo** la función `api/ai-recipes.js` en Vercel.
+3. Sin autenticación para esa ruta (como pediste), pero con:
+   - CORS restringido a tu dominio,
+   - rate limiting (ideal en Vercel o proxy),
+   - validación estricta del payload.
+
+Configurable en frontend con:
+
+```html
+<script>
+  window.SALCHIPAPAS_AI_API_URL = 'https://TU-PROYECTO.vercel.app/api/ai-recipes';
+</script>
+```
+
+Si no defines esta variable, usa por defecto:
+
+- `https://salchipapas-ai.vercel.app/api/ai-recipes`
 
 ## Troubleshooting
 
@@ -39,5 +78,6 @@ Pasos recomendados:
 ## Estructura
 
 - `js/services/firebase.js`: lectura/escritura de Firebase.
-- `js/services/api.js`: capa de acceso usada por la app (login + calendario + compra).
+- `js/services/api.js`: login Firebase + calendario + compra + IA.
+- `js/services/ai.js`: orquestación de prompts de menú y aceptación en calendario.
 - `js/security/auth.js`: control de pantalla de login y cierre de sesión.

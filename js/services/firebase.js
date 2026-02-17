@@ -1,10 +1,15 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
 const firebaseConfig = { databaseURL: "https://familyhub-f33f9-default-rtdb.europe-west1.firebasedatabase.app/" };
 
 export function createFirebaseService() {
-    const app = initializeApp(firebaseConfig);
+    // En algunos navegadores quedan stores de IndexedDB corruptos de versiones previas
+    // (p.ej. firebase-heartbeat-store). Desactivamos automaticDataCollection para evitar
+    // escrituras de heartbeat y reducimos estos errores de runtime (app/idb-set).
+    const app = getApps().length
+        ? getApp()
+        : initializeApp(firebaseConfig, { automaticDataCollectionEnabled: false });
     const db = getDatabase(app);
 
     const rootRef = ref(db, 'family_v9');
@@ -12,6 +17,8 @@ export function createFirebaseService() {
     const pantryRef = ref(db, 'family_v9/pantry');
     const authUsernameRef = ref(db, 'family_v9/config/authUsername');
     const authPasswordRef = ref(db, 'family_v9/config/authPassword');
+    const legacyAccessCodeRef = ref(db, 'family_v9/config/accessCode');
+    const legacyAuthAccessCodeRef = ref(db, 'family_v9/config/authAccessCode');
 
     const readValue = async (valueRef, fallback = null) => {
         const snapshot = await get(valueRef);
@@ -35,11 +42,15 @@ export function createFirebaseService() {
             await set(pantryRef, pantry || []);
         },
         async loadCredentials() {
-            const [username, password] = await Promise.all([
+            const [username, password, legacyAccessCode, legacyAuthAccessCode] = await Promise.all([
                 readValue(authUsernameRef, ''),
-                readValue(authPasswordRef, '')
+                readValue(authPasswordRef, ''),
+                readValue(legacyAccessCodeRef, ''),
+                readValue(legacyAuthAccessCodeRef, '')
             ]);
-            return { username, password };
+
+            const accessCode = legacyAccessCode || legacyAuthAccessCode;
+            return { username, password, accessCode };
         }
     };
 }

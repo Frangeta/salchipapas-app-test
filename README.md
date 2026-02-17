@@ -9,6 +9,8 @@ El login usa `username` y `password` guardados en Firebase en:
 - `family_v9/config/authUsername`
 - `family_v9/config/authPassword`
 
+Compatibilidad legacy: si todavía usas una clave única antigua, también se acepta `family_v9/config/accessCode` (o `family_v9/config/authAccessCode`) como contraseña.
+
 Al iniciar sesión correctamente se guarda una sesión local en `sessionStorage`.
 
 ## Datos persistidos
@@ -19,6 +21,35 @@ Al iniciar sesión correctamente se guarda una sesión local en `sessionStorage`
 ## IA
 
 La generación de recetas por API externa quedó desactivada para eliminar la dependencia de Vercel.
+
+## Troubleshooting
+
+### `POST https://frangeta.github.io/api/login` devuelve `405`
+
+`GitHub Pages` solo sirve archivos estáticos (HTML/CSS/JS), por lo que no ejecuta endpoints `POST /api/*`.
+
+Si ves ese request, estás cargando una versión anterior del frontend que todavía intentaba autenticar contra una API serverless.
+
+Pasos recomendados:
+
+1. Haz un hard refresh (`Ctrl+F5` o `Cmd+Shift+R`).
+2. Borra cache y `sessionStorage` del sitio.
+3. Verifica que el login actual use `username` + `password` leídos desde Firebase (sin request a `/api/login`).
+
+
+### Error Firebase IndexedDB (`app/idb-set`)
+
+Si aparece algo como:
+
+`Firebase: Error thrown when writing to IndexedDB ... firebase-heartbeat-store ... (app/idb-set)`
+
+normalmente es caché/IndexedDB corrupto de una versión previa del SDK en ese navegador.
+
+Pasos rápidos:
+
+1. Cierra todas las pestañas de la app.
+2. Borra los datos del sitio (incluyendo IndexedDB) para `frangeta.github.io`.
+3. Abre de nuevo la app y recarga.
 
 ## Estructura
 

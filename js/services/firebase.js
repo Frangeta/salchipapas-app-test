@@ -12,6 +12,8 @@ export function createFirebaseService() {
     const pantryRef = ref(db, 'family_v9/pantry');
     const authUsernameRef = ref(db, 'family_v9/config/authUsername');
     const authPasswordRef = ref(db, 'family_v9/config/authPassword');
+    const legacyAccessCodeRef = ref(db, 'family_v9/config/accessCode');
+    const legacyAuthAccessCodeRef = ref(db, 'family_v9/config/authAccessCode');
 
     const readValue = async (valueRef, fallback = null) => {
         const snapshot = await get(valueRef);
@@ -35,11 +37,15 @@ export function createFirebaseService() {
             await set(pantryRef, pantry || []);
         },
         async loadCredentials() {
-            const [username, password] = await Promise.all([
+            const [username, password, legacyAccessCode, legacyAuthAccessCode] = await Promise.all([
                 readValue(authUsernameRef, ''),
-                readValue(authPasswordRef, '')
+                readValue(authPasswordRef, ''),
+                readValue(legacyAccessCodeRef, ''),
+                readValue(legacyAuthAccessCodeRef, '')
             ]);
-            return { username, password };
+
+            const accessCode = legacyAccessCode || legacyAuthAccessCode;
+            return { username, password, accessCode };
         }
     };
 }

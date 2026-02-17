@@ -24,6 +24,8 @@ export function createApiService() {
     else sessionStorage.removeItem(SESSION_KEY);
   };
 
+  const normalize = (value) => String(value || '').trim();
+
   return {
     hasValidSession() {
       const current = readSession();
@@ -35,16 +37,34 @@ export function createApiService() {
     async login({ username, password }) {
       const credentials = await firebase.loadCredentials();
 
-      if (!credentials.username || !credentials.password) {
-        throw new Error('Configura authUsername y authPassword en Firebase.');
+      const inputUsername = normalize(username);
+      const inputPassword = normalize(password);
+      const configuredUsername = normalize(credentials.username);
+      const configuredPassword = normalize(credentials.password);
+      const legacyAccessCode = normalize(credentials.accessCode);
+
+      if (configuredUsername && configuredPassword) {
+        if (
+          inputUsername.toLowerCase() !== configuredUsername.toLowerCase() ||
+          inputPassword !== configuredPassword
+        ) {
+          throw new Error('Credenciales inválidas.');
+        }
+
+        writeSession({ username: configuredUsername });
+        return { ok: true, authMode: 'userpass' };
       }
 
-      if (username !== credentials.username || password !== credentials.password) {
-        throw new Error('Credenciales inválidas.');
+      if (legacyAccessCode) {
+        if (inputPassword !== legacyAccessCode) {
+          throw new Error('Credenciales inválidas.');
+        }
+
+        writeSession({ username: inputUsername || 'usuario' });
+        return { ok: true, authMode: 'legacy-access-code' };
       }
 
-      writeSession({ username });
-      return { ok: true };
+      throw new Error('Configura authUsername/authPassword o accessCode en Firebase.');
     },
     async loadCalendar() {
       const calendar = await firebase.loadCalendar();

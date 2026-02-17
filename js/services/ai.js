@@ -1,14 +1,29 @@
 import { DEFAULT_CONFIG } from '../constants/defaultConfig.js';
 
 export function createAi(app) {
+    const splitIngredients = (raw = '') => String(raw)
+        .split(/[\n,]/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+
     return {
         async generateMenu(btn = null) {
             if (btn) { btn.disabled = true; btn.innerText = 'Pensando menú...'; }
             app.ui.setLoading(true, 'Generando menú semanal...');
 
             try {
+                const source = document.getElementById('plannerSource')?.value || 'pantry';
+                const customIngredients = splitIngredients(document.getElementById('plannerIngredients')?.value || '');
                 const pantryIngredients = (app.state.shopping || []).map((item) => item.name).slice(0, 30);
-                const data = await app.api.generateAiRecipes(pantryIngredients);
+                const ingredients = source === 'custom' ? customIngredients : pantryIngredients;
+
+                if (!ingredients.length) {
+                    throw new Error(source === 'custom'
+                        ? 'Añade ingredientes manuales para generar el menú.'
+                        : 'Tu despensa está vacía. Añade ingredientes en Compra.');
+                }
+
+                const data = await app.api.generateAiRecipes(ingredients);
 
                 let start = new Date();
                 start.setDate(start.getDate() + (1 + 7 - start.getDay()) % 7);

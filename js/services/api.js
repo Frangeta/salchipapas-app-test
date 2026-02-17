@@ -1,6 +1,7 @@
 import { createFirebaseService } from './firebase.js';
 
 const SESSION_KEY = 'salchipapas_session';
+const AI_API_URL = 'https://salchipapas-ai.vercel.app/api/ai-recipes';
 
 export function createApiService() {
   const firebase = createFirebaseService();
@@ -25,6 +26,11 @@ export function createApiService() {
   };
 
   const normalize = (value) => String(value || '').trim();
+
+  const resolveAiApiUrl = () => {
+    const configured = normalize(window.SALCHIPAPAS_AI_API_URL || '');
+    return configured || AI_API_URL;
+  };
 
   return {
     hasValidSession() {
@@ -82,8 +88,32 @@ export function createApiService() {
       await firebase.savePantry(pantry);
       return { ok: true };
     },
-    async generateAiRecipes() {
-      throw new Error('La IA por API fue desactivada (sin Vercel).');
+    async generateAiRecipes(ingredients = []) {
+      const apiUrl = resolveAiApiUrl();
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ingredients })
+      });
+
+      let payload = {};
+      try {
+        payload = await response.json();
+      } catch (_error) {
+        payload = {};
+      }
+
+      if (!response.ok || payload?.ok === false) {
+        const errorMessage = payload?.error?.message || payload?.error || 'Error al generar menú IA.';
+        throw new Error(errorMessage);
+      }
+
+      const data = payload?.data || payload;
+      if (!Array.isArray(data?.comidas) || !Array.isArray(data?.cenas)) {
+        throw new Error('Respuesta IA inválida.');
+      }
+
+      return data;
     }
   };
 }

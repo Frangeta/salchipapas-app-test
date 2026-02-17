@@ -1,10 +1,10 @@
 const OpenAI = require('openai');
-const { requireAuth, sendError } = require('../lib/auth');
-const withCors = require('../lib/withCors');
+const { sendError } = require('../salchipapas-api/lib/auth');
+const withCors = require('../salchipapas-api/lib/withCors');
 
 const SYSTEM_PROMPT = 'Devuelve SOLO JSON válido con esta forma: {"comidas":[{"dia":"Lunes","plato":"..."}],"cenas":[{"dia":"Lunes","plato":"..."}]}. Deben ser exactamente 7 comidas y 7 cenas.';
 
-module.exports = withCors(requireAuth(async (req, res) => {
+module.exports = withCors(async (req, res) => {
   if (req.method !== 'POST') return sendError(res, 405, 'METHOD_NOT_ALLOWED', 'Solo POST');
 
   const apiKey = process.env.OPENAI_API_KEY;
@@ -31,4 +31,4 @@ module.exports = withCors(requireAuth(async (req, res) => {
   }
 
   return res.status(200).json({ ok: true, data: parsed });
-}));
+});
